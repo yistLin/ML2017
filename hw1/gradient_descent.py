@@ -15,6 +15,7 @@ train_data = train_data.reshape(12, -1, 24) # shape = (12, 360, 24)
 train_data = train_data.reshape(12, -1, 18, 24) # shape = (12, 20, 18, 24)
 train_data = train_data.swapaxes(1, 2).reshape(12, 18, -1) # shape = (12, 18, 480)
 needed_cols = [8, 9, 10, 15, 16]
+# needed_cols = range(18)
 target_col = 9 # PM2.5
 num_col = len(needed_cols)
 X = []
@@ -24,47 +25,46 @@ for mon in range(12):
         X.append(np.array([train_data[mon][col][i:i+9] for col in needed_cols]))
         Y.append(train_data[mon][target_col][i+9].astype(float))
 
-# Declare basic settings
-iteration = 300000
-lr = 0.1
-b_lr = 1e-2
-w_lr = np.full((num_col * 9), 1e-2)
-b = 0.0
-w = np.ones(shape=(num_col * 9))
-
 # Training
-x_flat = np.array(X).reshape(len(X), 9 * num_col).astype(float)
-# print(x_flat)
-# print('x_flat shape =', x_flat.shape)
-# print('w shape =', w.shape)
+X = np.array(X).reshape(len(X), 9 * num_col).astype(float)
+Y = np.array(Y)
+X = np.concatenate((X, X ** 2), axis=1)
+randomize = np.random.permutation(len(X))
+X, Y = X[randomize], Y[randomize]
+valid_X, train_X = X[:240], X[240:]
+valid_Y, train_Y = Y[:240], Y[240:]
+
+# Declare basic settings
+iteration = 200000
+lr = 0.5
+b_lr = 1e-20
+w_lr = np.full((X.shape[1]), 1e-20)
+b = 0.0
+w = np.ones(shape=(X.shape[1]))
 
 for i in range(iteration):
     b_grad = 0.0
-    w_grad = np.zeros(shape=(num_col * 9))
+    w_grad = np.zeros(shape=(X.shape[1]))
 
-    predictions = x_flat.dot(w) + b
-    errors = Y - predictions
-    # print('predictions =', predictions)
-    # print('predictions shape =', predictions.shape)
-    # print('errors =', errors)
-    # print('errors shape =', errors.shape)
-    
-    b_grad = b_grad - 2.0 * np.sum(errors) * 1.0
-    w_grad = w_grad - 2.0 * np.dot(x_flat.T, errors)
+    predictions = train_X.dot(w) + b
+    errors = train_Y - predictions
 
-    # for n in range(len(X)):
-    #     x_flat = X[n].flatten().astype(float)
-    #     b_grad = b_grad - 2.0 * (Y[n] - b - x_flat.dot(w)) * 1.0
-    #     w_grad = w_grad - 2.0 * (Y[n] - b - x_flat.dot(w)) * x_flat
-    
+    b_grad = b_grad - 2.0 * np.sum(errors)
+    w_grad = w_grad - 2.0 * np.dot(train_X.T, errors)
+
     b_lr = b_lr + b_grad ** 2
     w_lr = w_lr + w_grad ** 2
     # Update parameters
     b = b - lr / np.sqrt(b_lr) * b_grad
     w = w - lr / np.sqrt(w_lr) * w_grad
 
-    if (i+1) % 100 == 0:
+    if (i+1) % 1000 == 0:
         print('Epoch %d' % (i+1))
+        print('  --> [Train] RMSE Loss = %f' % np.sqrt(np.mean(errors ** 2)))
+        predictions = valid_X.dot(w) + b
+        errors = valid_Y - predictions
+        rmse = np.sqrt(np.mean(errors ** 2))
+        print('  --> [Valid] RMSE Loss = %f' % rmse)
 
 np.set_printoptions(threshold=np.nan)
 print('b =', b)
@@ -89,6 +89,7 @@ for i in range(test_data.shape[0]):
 # Testing
 for x in test_X:
     x_flat = x.flatten().astype(float)
+    x_flat = np.concatenate((x_flat, x_flat ** 2))
     test_Y.append(x_flat.dot(w) + b)
 
 # Write predictions to output file
