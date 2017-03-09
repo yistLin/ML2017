@@ -5,42 +5,52 @@ import numpy as np
 with open(sys.argv[1], 'r', encoding='big5') as train_file:
     train_data = []
     for line in train_file:
-        line = line.replace('NR', '0.0')
         fields = line[:-1].split(',')
-        train_data.append(fields[3:])
+        train_data.append([0.0 if x in ['NR', ''] else float(x) for x in fields[3:]])
 
 # Prepare training data
 train_data = np.array(train_data[1:]) # shape = (4320, 24)
 train_data = train_data.reshape(12, -1, 24) # shape = (12, 360, 24)
 train_data = train_data.reshape(12, -1, 18, 24) # shape = (12, 20, 18, 24)
 train_data = train_data.swapaxes(1, 2).reshape(12, 18, -1) # shape = (12, 18, 480)
-needed_cols = [8, 9, 10, 15, 16]
+
+needed_cols = [2, 7, 8, 9, 10, 12, 14, 17]
 # needed_cols = range(18)
 target_col = 9 # PM2.5
 num_col = len(needed_cols)
+prev_col = 9
 X = []
 Y = []
 for mon in range(12):
-    for i in range(480 - 9):
-        X.append(np.array([train_data[mon][col][i:i+9] for col in needed_cols]))
-        Y.append(train_data[mon][target_col][i+9].astype(float))
+    for i in range(480 - prev_col):
+        X.append(np.array([train_data[mon][col][i:i+prev_col] for col in needed_cols]))
+        Y.append(train_data[mon][target_col][i+prev_col])
 
 # Training
-X = np.array(X).reshape(len(X), 9 * num_col).astype(float)
+X = np.array(X).reshape(len(X), prev_col * num_col)
 Y = np.array(Y)
 X = np.concatenate((X, X ** 2), axis=1)
+
+# Normalization
+feat_max = np.max(X, axis=0)
+feat_min = np.min(X, axis=0)
+X = (X - feat_min) / (feat_max - feat_min + 1e-20)
+
+# Separate valid set and train set
 randomize = np.random.permutation(len(X))
 X, Y = X[randomize], Y[randomize]
 valid_X, train_X = X[:240], X[240:]
 valid_Y, train_Y = Y[:240], Y[240:]
 
 # Declare basic settings
-iteration = 200000
+iteration = 50000
 lr = 0.5
 b_lr = 1e-20
 w_lr = np.full((X.shape[1]), 1e-20)
 b = 0.0
 w = np.ones(shape=(X.shape[1]))
+prev_rmse = 1e20
+rising_cnt = 0
 
 for i in range(iteration):
     b_grad = 0.0
@@ -64,6 +74,14 @@ for i in range(iteration):
         predictions = valid_X.dot(w) + b
         errors = valid_Y - predictions
         rmse = np.sqrt(np.mean(errors ** 2))
+        if prev_rmse < rmse:
+            rising_cnt += 1
+            if rising_cnt > 3:
+                print('  --> [Warning] valid loss rise more than 3 times')
+                break
+        else:
+            rising_cnt = 0
+        prev_rmse = rmse
         print('  --> [Valid] RMSE Loss = %f' % rmse)
 
 np.set_printoptions(threshold=np.nan)
@@ -74,9 +92,8 @@ print('w =', w)
 with open(sys.argv[2], 'r', encoding='big5') as test_file:
     test_data = []
     for line in test_file:
-        line = line.replace('NR', '0.0')
         fields = line[:-1].split(',')
-        test_data.append(fields[2:])
+        test_data.append([0.0 if x in ['NR', ''] else float(x) for x in fields[2:]])
 
 # Prepare testing data
 test_data = np.array(test_data) # shape = (4320, 9)
@@ -84,12 +101,15 @@ test_data = test_data.reshape(-1, 18, 9) # shape = (240, 18, 9)
 test_X = []
 test_Y = []
 for i in range(test_data.shape[0]):
-    test_X.append(np.array([test_data[i][col][:] for col in needed_cols]))
+    test_X.append(np.array([test_data[i][col][9-prev_col:] for col in needed_cols]))
+
+test_X = np.array(test_X)
 
 # Testing
 for x in test_X:
-    x_flat = x.flatten().astype(float)
+    x_flat = x.flatten()
     x_flat = np.concatenate((x_flat, x_flat ** 2))
+    x_flat = (x_flat - feat_min) / (feat_max - feat_min + 1e-20)
     test_Y.append(x_flat.dot(w) + b)
 
 # Write predictions to output file
