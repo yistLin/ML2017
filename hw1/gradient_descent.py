@@ -14,36 +14,40 @@ train_data = train_data.reshape(12, -1, 24) # shape = (12, 360, 24)
 train_data = train_data.reshape(12, -1, 18, 24) # shape = (12, 20, 18, 24)
 train_data = train_data.swapaxes(1, 2).reshape(12, 18, -1) # shape = (12, 18, 480)
 
-needed_cols = [2, 7, 8, 9, 10, 12, 14, 17]
-# needed_cols = range(18)
+# Remove Juli
+train_data = np.concatenate((train_data[:6], train_data[7:]))
+# print('train_data.shape =', train_data.shape)
+
+needed_cols = [2, 7, 8, 9, 10, 12, 14, 15, 16, 17]
 target_col = 9 # PM2.5
 num_col = len(needed_cols)
 prev_col = 9
 X = []
 Y = []
-for mon in range(12):
+for mon in range(len(train_data)):
     for i in range(480 - prev_col):
         X.append(np.array([train_data[mon][col][i:i+prev_col] for col in needed_cols]))
         Y.append(train_data[mon][target_col][i+prev_col])
 
 # Training
-X = np.array(X).reshape(len(X), prev_col * num_col)
+X = np.array(X)
+col_o3 = X[:, 1].reshape(len(X), prev_col)
+col_pm2 = X[:, 3].reshape(len(X), prev_col)
+col_mul = col_o3 * col_pm2
+X = X.reshape(len(X), prev_col * num_col)
 Y = np.array(Y)
-X = np.concatenate((X, X ** 2), axis=1)
+X = np.concatenate((X, X**2, col_mul), axis=1)
 
 # Normalization
 feat_max = np.max(X, axis=0)
 feat_min = np.min(X, axis=0)
 X = (X - feat_min) / (feat_max - feat_min + 1e-20)
 
-# Separate valid set and train set
-randomize = np.random.permutation(len(X))
-X, Y = X[randomize], Y[randomize]
-valid_X, train_X = X[:240], X[240:]
-valid_Y, train_Y = Y[:240], Y[240:]
+train_X = X
+train_Y = Y
 
 # Declare basic settings
-iteration = 50000
+iteration = 40000
 lr = 0.5
 b_lr = 1e-20
 w_lr = np.full((X.shape[1]), 1e-20)
@@ -51,6 +55,7 @@ b = 0.0
 w = np.ones(shape=(X.shape[1]))
 prev_rmse = 1e20
 rising_cnt = 0
+reg_lambda = 1e-2
 
 for i in range(iteration):
     b_grad = 0.0
@@ -60,29 +65,30 @@ for i in range(iteration):
     errors = train_Y - predictions
 
     b_grad = b_grad - 2.0 * np.sum(errors)
+    # w_grad = w_grad - 2.0 * np.dot(train_X.T, errors)
     w_grad = w_grad - 2.0 * np.dot(train_X.T, errors)
 
     b_lr = b_lr + b_grad ** 2
     w_lr = w_lr + w_grad ** 2
     # Update parameters
     b = b - lr / np.sqrt(b_lr) * b_grad
-    w = w - lr / np.sqrt(w_lr) * w_grad
+    w = w - lr / np.sqrt(w_lr) * (w_grad - reg_lambda * w)
 
     if (i+1) % 1000 == 0:
         print('Epoch %d' % (i+1))
         print('  --> [Train] RMSE Loss = %f' % np.sqrt(np.mean(errors ** 2)))
-        predictions = valid_X.dot(w) + b
-        errors = valid_Y - predictions
-        rmse = np.sqrt(np.mean(errors ** 2))
-        if prev_rmse < rmse:
-            rising_cnt += 1
-            if rising_cnt > 3:
-                print('  --> [Warning] valid loss rise more than 3 times')
-                break
-        else:
-            rising_cnt = 0
-        prev_rmse = rmse
-        print('  --> [Valid] RMSE Loss = %f' % rmse)
+        # predictions = valid_X.dot(w) + b
+        # errors = valid_Y - predictions
+        # rmse = np.sqrt(np.mean(errors ** 2))
+        # if prev_rmse < rmse:
+        #     rising_cnt += 1
+        #     if rising_cnt > 3:
+        #         print('  --> [Warning] valid loss rise more than 3 times')
+        #         break
+        # else:
+        #     rising_cnt = 0
+        # prev_rmse = rmse
+        # print('  --> [Valid] RMSE Loss = %f' % rmse)
 
 np.set_printoptions(threshold=np.nan)
 print('b =', b)
@@ -107,8 +113,12 @@ test_X = np.array(test_X)
 
 # Testing
 for x in test_X:
+    col_o3 = x[1].flatten()
+    col_pm2 = x[3].flatten()
+    col_mul = col_o3 * col_pm2
     x_flat = x.flatten()
-    x_flat = np.concatenate((x_flat, x_flat ** 2))
+
+    x_flat = np.concatenate((x_flat, x_flat ** 2, col_mul))
     x_flat = (x_flat - feat_min) / (feat_max - feat_min + 1e-20)
     test_Y.append(x_flat.dot(w) + b)
 

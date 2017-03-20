@@ -42,10 +42,11 @@ X = (X - feat_min) / (feat_max - feat_min + 1e-20)
 # Separate valid set and train set
 randomize = np.random.permutation(len(X))
 X, Y = X[randomize], Y[randomize]
-valid_X, train_X = X[5000:], X[:5000]
-valid_Y, train_Y = Y[5000:], Y[:5000]
+valid_X, train_X = X[5000:], X[:2000]
+valid_Y, train_Y = Y[5000:], Y[:2000]
 # train_X = X[:2000]
 # train_Y = Y[:2000]
+print('# of train set =', len(train_X))
 print('# of valid set =', len(valid_X))
 
 # Declare basic settings
