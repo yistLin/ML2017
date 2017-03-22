@@ -47,7 +47,7 @@ train_X = X
 train_Y = Y
 
 # Declare basic settings
-iteration = 40000
+iteration = 35000
 lr = 0.5
 b_lr = 1e-20
 w_lr = np.full((X.shape[1]), 1e-20)
