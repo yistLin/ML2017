@@ -38,8 +38,9 @@ def cross_entropy(y, h):
 
 def predict(X, theta, X_mean, X_std):
     # X = np.concatenate((X, X**3), axis=1)
-    log_age = np.log(X[:,0]).reshape(-1, 1)
-    X = np.concatenate((log_age, X[:,1:], X**3, X**5), axis=1)
+    cap_gain = X[:, 3].reshape(-1, 1)
+    log_cap_gain = np.log(cap_gain + 1e-2)
+    X = np.concatenate((log_cap_gain, X, X**3), axis=1)
     X = (X - X_mean) / X_std
     X = np.concatenate((X, np.ones(shape=(len(X), 1))), axis=1)
     h = sigmoid(X.dot(theta))
@@ -51,9 +52,9 @@ def gradient_descent(X, Y, nb_epoch):
     reg_lambda = 0.005
 
     # add cubic terms
-    log_age = np.log(X[:,0]).reshape(-1, 1)
-    X = np.concatenate((log_age, X[:,1:], X**3, X**5), axis=1)
-    # X = np.concatenate((X, X**3), axis=1)
+    cap_gain = X[:, 3].reshape(-1, 1)
+    log_cap_gain = np.log(cap_gain + 1e-2)
+    X = np.concatenate((log_cap_gain, X, X**3), axis=1)
 
     # normalization
     X_mean = np.mean(X, axis=0)
@@ -110,7 +111,7 @@ def main():
     # features.shape = (32561, 106)
     features, labels = read_provided_features(sys.argv[3], sys.argv[4])
 
-    theta, X_mean, X_std = gradient_descent(features, labels, 2500)
+    theta, X_mean, X_std = gradient_descent(features, labels, 3000)
 
     # test.shape = (16281, 106)
     tests = read_test_features(sys.argv[5])
