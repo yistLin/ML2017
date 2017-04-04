@@ -28,49 +28,34 @@ def read_test_features(test_filename):
 
     return np.array(tests)
 
+def sigmoid(z):
+    return np.clip(1 / (1.0 + np.exp(-z)), 0.00000000000001, 0.99999999999999)
+
 def maximum_likelihood(X, Y, X_test):
-    # normalization
-    X_mean = np.mean(X, axis=0)
-    X_std = np.std(X, axis=0)
-    X = (X - X_mean) / X_std
-
     # split classes
-    cx = [X[Y == 0], X[Y == 1]]
-    mu = []
-    sigma = []
-
-    # calculate mu and covariance matrix
     nb_data, nb_feat = X.shape
+    cx = [X[Y == 0], X[Y == 1]]
+    p = [float(len(cx[0])) / nb_data, float(len(cx[1])) / nb_data]
+
+    # calculate covariance matrix
+    mu = [np.mean(cx[0], axis=0), np.mean(cx[1], axis=0)]
+    sigma = [np.zeros(shape=(nb_feat,nb_feat)), np.zeros(shape=(nb_feat,nb_feat))]
     for i in range(2):
-        mu.append(np.mean(cx[i], axis=0))
-        cov_sum = np.zeros(shape=(nb_feat, nb_feat))
         for n in range(len(cx[i])):
-            dif = cx[i][n] - mu[i]
-            dif = dif.reshape(-1, 1)
-            cov_sum += (dif * dif.T)
-        sigma.append(cov_sum / len(cx[i]))
-        print('sigma[%d] =' % i, sigma[i])
+            dif = (cx[i][n] - mu[i]).reshape(-1, 1)
+            sigma[i] += np.dot(dif, dif.T)
+        sigma[i] /= float(len(cx[i]))
 
-    predictions = []
-    term1 = []
-    print('np.linalg.det(sigma[0]) =', np.linalg.det(sigma[0]))
-    print('np.linalg.det(sigma[1]) =', np.linalg.det(sigma[1]))
-    term1.append(1 / np.sqrt(2 * np.pi * np.linalg.det(sigma[0])))
-    term1.append(1 / np.sqrt(2 * np.pi * np.linalg.det(sigma[1])))
-    for i in range(len(X_test)):
-        dif = X_test[i] - mu[0]
-        dif = dif.reshape(-1, 1)
-        term2 = np.exp(-0.5 * dif.T * (1/sigma[0]) * dif)
-        print('P(C1|x): %f x %f = %f' % (term1[0], term2[0][0], term1[0] * term2[0][0]))
-        
-        dif = X_test[i] - mu[1]
-        dif = dif.reshape(-1, 1)
-        term2 = np.exp(-0.5 * dif.T * (1/sigma[1]) * dif)
-        print('P(C2|x): %f x %f = %f' % (term1[1], term2[0][0], term1[1] * term2[0][0]))
-        if i > 5:
-            break
+    # shared covariance matrix
+    shared_sigma = p[0] * sigma[0] + p[1] * sigma[1]
 
-    sys.exit(1)
+    # predict
+    sigma_inverse = np.linalg.inv(shared_sigma)
+    w = np.dot((mu[1] - mu[0]), sigma_inverse)
+    b = (-0.5) * np.dot(np.dot([mu[1]], sigma_inverse), mu[1]) + (0.5) * np.dot(np.dot([mu[0]], sigma_inverse), mu[0]) + np.log(float(len(cx[1]))/len(cx[0]))
+    h = np.dot(w, X_test.T) + b
+
+    return np.around(sigmoid(h))
 
 def main():
     # features.shape = (32561, 106)
@@ -83,8 +68,8 @@ def main():
 
     with open(sys.argv[6], 'w') as output_file:
         outputs = ['id,label']
-        for i, res in enumerate(results):
-            outputs.append('%d,%d' % (i+1, res))
+        for i, label in enumerate(predictions):
+            outputs.append('%d,%d' % (i+1, label))
         outputs.append('')
         output_file.write('\n'.join(outputs))
 
