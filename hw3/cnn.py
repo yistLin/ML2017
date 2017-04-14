@@ -3,9 +3,9 @@ import sys
 import numpy as np
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
-from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Dense, Dropout, Activation, Flatten, LeakyReLU, BatchNormalization
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import EarlyStopping
+from keras.callbacks import ModelCheckpoint
 
 def read_features(filename):
     col0 = []
@@ -24,77 +24,90 @@ def train_model(features, labels):
     Y = np.zeros(shape=(labels.shape[0], 7))
     Y[np.arange(labels.shape[0]), labels] = 1
 
-    X_valid, X_train = X[:4000], X[4000:]
-    Y_valid, Y_train = Y[:4000], Y[4000:]
+    X_valid, X_train = X[:3000], X[3000:]
+    Y_valid, Y_train = Y[:3000], Y[3000:]
+    X_train_flip = X_train[:, :, ::-1, :]
+    X_train = np.concatenate((X_train, X_train_flip), axis=0)
+    Y_train = np.concatenate((Y_train, Y_train), axis=0)
 
     datagen = ImageDataGenerator(
-        # featurewise_center=True,
-        # featurewise_std_normalization=True,
         rescale=1./255,
-        rotation_range=20,
+        rotation_range=30,
+        shear_range=0.2,
+        zoom_range=0.2,
         width_shift_range=0.2,
         height_shift_range=0.2,
         horizontal_flip=True)
     datagen.fit(X_train)
-
-    validgen = ImageDataGenerator(
-        rescale=1./255)
+    X_valid = X_valid / 255.
 
     model = Sequential()
 
-    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(48, 48, 1)))
-    model.add(Conv2D(32, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(32, (3, 3), input_shape=(48, 48, 1), padding='same', kernel_initializer='glorot_normal'))
+    model.add(LeakyReLU(alpha=1./20))
+    model.add(BatchNormalization())
+
+    model.add(Conv2D(32, (3, 3), padding='same', kernel_initializer='glorot_normal'))
+    model.add(LeakyReLU(alpha=1./20))
+    model.add(BatchNormalization())
+
+    model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
     model.add(Dropout(0.1))
 
-    model.add(Conv2D(64, (3, 3), activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(64, (3, 3), padding='same', kernel_initializer='glorot_normal'))
+    model.add(LeakyReLU(alpha=1./20))
+    model.add(BatchNormalization())
+ 
+    model.add(Conv2D(64, (3, 3), padding='same', kernel_initializer='glorot_normal'))
+    model.add(LeakyReLU(alpha=1./20))
+    model.add(BatchNormalization())
+
+    model.add(AveragePooling2D(pool_size=(2, 2), padding='same'))
     model.add(Dropout(0.1))
 
-    model.add(Conv2D(128, (3, 3), activation='relu'))
-    model.add(Conv2D(128, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(128, (3, 3), padding='same', kernel_initializer='glorot_normal'))
+    model.add(LeakyReLU(alpha=1./20))
+    model.add(BatchNormalization())
+
+    model.add(Conv2D(256, (3, 3), padding='same', kernel_initializer='glorot_normal'))
+    model.add(LeakyReLU(alpha=1./20))
+    model.add(BatchNormalization())
+
+    model.add(AveragePooling2D(pool_size=(3, 3), padding='same'))
     model.add(Dropout(0.3))
 
     model.add(Flatten())
 
-    model.add(Dense(2048, activation='relu'))
+    model.add(Dense(1024, activation='relu', kernel_initializer='glorot_normal'))
+    model.add(BatchNormalization())
     model.add(Dropout(0.5))
-    model.add(Dense(7, activation='softmax'))
+    model.add(Dense(7, activation='softmax', kernel_initializer='glorot_normal'))
     model.compile(optimizer='adam',
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
+
+    checkpointer = ModelCheckpoint(
+            filepath='model-{val_acc:.4f}.hdf5',
+            # filepath='model.hdf5',
+            monitor='val_acc',
+            verbose=1,
+            save_best_only=True,
+            save_weights_only=False,
+            mode='auto',
+            period=1)
+
+    model.summary()
+
     model.fit_generator(
         datagen.flow(X_train, Y_train, batch_size=128),
-        steps_per_epoch=400,
-        validation_data=validgen.flow(X_valid, Y_valid, batch_size=128),
-        validation_steps=4000//128,
-        epochs=400,
-        callbacks=[EarlyStopping(monitor='val_loss', min_delta=0, patience=6, verbose=0, mode='auto')]
-        )
-
-    model.save_weights('model_weights.hdf5')
-
-    return model
-
-def predict(model, test_features):
-    X = test_features / 255
-    X.shape = (-1, 48, 48, 1)
-    return model.predict_classes(X)
+        steps_per_epoch=5*len(X_train)//128,
+        validation_data=(X_valid, Y_valid),
+        epochs=2000,
+        callbacks=[checkpointer])
 
 def main():
     labels, features = read_features(sys.argv[1])
-    model = train_model(features, labels)
-    ids, test_features = read_features(sys.argv[2])
-    results = predict(model, test_features)
-
-    with open(sys.argv[3], 'w') as output_file:
-        outputs = ['id,label']
-        for i, label in enumerate(results):
-            outputs.append('%d,%d' % (i, label))
-        outputs.append('')
-        output_file.write('\n'.join(outputs))
+    train_model(features, labels)
 
 if __name__ == '__main__':
     main()
