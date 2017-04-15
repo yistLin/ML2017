@@ -26,9 +26,9 @@ def train_model(features, labels):
 
     X_valid, X_train = X[:3000], X[3000:]
     Y_valid, Y_train = Y[:3000], Y[3000:]
-    X_train_flip = X_train[:, :, ::-1, :]
-    X_train = np.concatenate((X_train, X_train_flip), axis=0)
-    Y_train = np.concatenate((Y_train, Y_train), axis=0)
+    # X_train_flip = X_train[:, :, ::-1, :]
+    # X_train = np.concatenate((X_train, X_train_flip), axis=0)
+    # Y_train = np.concatenate((Y_train, Y_train), axis=0)
 
     datagen = ImageDataGenerator(
         rescale=1./255,
@@ -62,7 +62,8 @@ def train_model(features, labels):
     model.add(LeakyReLU(alpha=1./20))
     model.add(BatchNormalization())
 
-    model.add(AveragePooling2D(pool_size=(2, 2), padding='same'))
+    # model.add(AveragePooling2D(pool_size=(2, 2), padding='same'))
+    model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
     model.add(Dropout(0.1))
 
     model.add(Conv2D(128, (3, 3), padding='same', kernel_initializer='glorot_normal'))

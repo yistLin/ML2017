@@ -21,11 +21,11 @@ def predict(model, test_features):
     return model.predict_classes(X)
 
 def main():
-    model = load_model('model.hdf5')
+    model = load_model(sys.argv[2])
     ids, test_features = read_features(sys.argv[1])
     results = predict(model, test_features)
 
-    with open(sys.argv[2], 'w') as output_file:
+    with open(sys.argv[3], 'w') as output_file:
         outputs = ['id,label']
         for i, label in enumerate(results):
             outputs.append('%d,%d' % (i, label))
