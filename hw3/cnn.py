@@ -26,9 +26,9 @@ def train_model(features, labels):
 
     X_valid, X_train = X[:3000], X[3000:]
     Y_valid, Y_train = Y[:3000], Y[3000:]
-    # X_train_flip = X_train[:, :, ::-1, :]
-    # X_train = np.concatenate((X_train, X_train_flip), axis=0)
-    # Y_train = np.concatenate((Y_train, Y_train), axis=0)
+    X_train_flip = X_train[:, :, ::-1, :]
+    X_train = np.concatenate((X_train, X_train_flip), axis=0)
+    Y_train = np.concatenate((Y_train, Y_train), axis=0)
 
     datagen = ImageDataGenerator(
         rescale=1./255,
@@ -36,8 +36,7 @@ def train_model(features, labels):
         shear_range=0.2,
         zoom_range=0.2,
         width_shift_range=0.2,
-        height_shift_range=0.2,
-        horizontal_flip=True)
+        height_shift_range=0.2)
     datagen.fit(X_train)
     X_valid = X_valid / 255.
 
@@ -52,7 +51,7 @@ def train_model(features, labels):
     model.add(BatchNormalization())
 
     model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
-    model.add(Dropout(0.1))
+    model.add(Dropout(0.2))
 
     model.add(Conv2D(64, (3, 3), padding='same', kernel_initializer='glorot_normal'))
     model.add(LeakyReLU(alpha=1./20))
@@ -64,7 +63,7 @@ def train_model(features, labels):
 
     # model.add(AveragePooling2D(pool_size=(2, 2), padding='same'))
     model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
-    model.add(Dropout(0.1))
+    model.add(Dropout(0.3))
 
     model.add(Conv2D(128, (3, 3), padding='same', kernel_initializer='glorot_normal'))
     model.add(LeakyReLU(alpha=1./20))
@@ -75,11 +74,12 @@ def train_model(features, labels):
     model.add(BatchNormalization())
 
     model.add(AveragePooling2D(pool_size=(3, 3), padding='same'))
-    model.add(Dropout(0.3))
+    # model.add(MaxPooling2D(pool_size=(3, 3), padding='same'))
+    model.add(Dropout(0.4))
 
     model.add(Flatten())
 
-    model.add(Dense(1024, activation='relu', kernel_initializer='glorot_normal'))
+    model.add(Dense(1536, activation='relu', kernel_initializer='glorot_normal'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
     model.add(Dense(7, activation='softmax', kernel_initializer='glorot_normal'))
