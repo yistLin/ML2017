@@ -51,7 +51,7 @@ def train_model(features, labels):
     model.add(BatchNormalization())
 
     model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.1))
 
     model.add(Conv2D(64, (3, 3), padding='same', kernel_initializer='glorot_normal'))
     model.add(LeakyReLU(alpha=1./20))
@@ -61,9 +61,9 @@ def train_model(features, labels):
     model.add(LeakyReLU(alpha=1./20))
     model.add(BatchNormalization())
 
-    # model.add(AveragePooling2D(pool_size=(2, 2), padding='same'))
-    model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
-    model.add(Dropout(0.3))
+    model.add(AveragePooling2D(pool_size=(2, 2), padding='same'))
+    # model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
+    model.add(Dropout(0.2))
 
     model.add(Conv2D(128, (3, 3), padding='same', kernel_initializer='glorot_normal'))
     model.add(LeakyReLU(alpha=1./20))
@@ -79,7 +79,7 @@ def train_model(features, labels):
 
     model.add(Flatten())
 
-    model.add(Dense(1536, activation='relu', kernel_initializer='glorot_normal'))
+    model.add(Dense(1024, activation='relu', kernel_initializer='glorot_normal'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
     model.add(Dense(7, activation='softmax', kernel_initializer='glorot_normal'))
