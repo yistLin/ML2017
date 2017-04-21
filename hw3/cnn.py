@@ -5,7 +5,7 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
 from keras.layers import Dense, Dropout, Activation, Flatten, LeakyReLU, BatchNormalization
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, CSVLogger
 
 def read_features(filename):
     col0 = []
@@ -73,13 +73,13 @@ def train_model(features, labels):
     model.add(LeakyReLU(alpha=1./20))
     model.add(BatchNormalization())
 
+    # model.add(AveragePooling2D(pool_size=(4, 4), strides=(3, 3), padding='same'))
     model.add(AveragePooling2D(pool_size=(3, 3), padding='same'))
-    # model.add(MaxPooling2D(pool_size=(3, 3), padding='same'))
     model.add(Dropout(0.4))
 
     model.add(Flatten())
 
-    model.add(Dense(1024, activation='relu', kernel_initializer='glorot_normal'))
+    model.add(Dense(1536, activation='relu', kernel_initializer='glorot_normal'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
     model.add(Dense(7, activation='softmax', kernel_initializer='glorot_normal'))
@@ -96,6 +96,7 @@ def train_model(features, labels):
             save_weights_only=False,
             mode='auto',
             period=1)
+    csv_logger = CSVLogger('training.log', separator=',', append=False)
 
     model.summary()
 
@@ -104,7 +105,7 @@ def train_model(features, labels):
         steps_per_epoch=5*len(X_train)//128,
         validation_data=(X_valid, Y_valid),
         epochs=2000,
-        callbacks=[checkpointer])
+        callbacks=[checkpointer, csv_logger])
 
 def main():
     labels, features = read_features(sys.argv[1])
