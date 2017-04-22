@@ -42,44 +42,47 @@ def train_model(features, labels):
 
     model = Sequential()
 
-    model.add(Conv2D(32, (3, 3), input_shape=(48, 48, 1), padding='same', kernel_initializer='glorot_normal'))
+    model.add(Conv2D(48, (3, 3), input_shape=(48, 48, 1), padding='same', kernel_initializer='glorot_normal'))
     model.add(LeakyReLU(alpha=1./20))
     model.add(BatchNormalization())
 
-    model.add(Conv2D(32, (3, 3), padding='same', kernel_initializer='glorot_normal'))
+    model.add(Conv2D(64, (3, 3), padding='same', kernel_initializer='glorot_normal'))
     model.add(LeakyReLU(alpha=1./20))
     model.add(BatchNormalization())
 
     model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
-    model.add(Dropout(0.1))
-
-    model.add(Conv2D(64, (3, 3), padding='same', kernel_initializer='glorot_normal'))
-    model.add(LeakyReLU(alpha=1./20))
-    model.add(BatchNormalization())
- 
-    model.add(Conv2D(64, (3, 3), padding='same', kernel_initializer='glorot_normal'))
-    model.add(LeakyReLU(alpha=1./20))
-    model.add(BatchNormalization())
-
-    model.add(AveragePooling2D(pool_size=(2, 2), padding='same'))
-    # model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.3))
 
     model.add(Conv2D(128, (3, 3), padding='same', kernel_initializer='glorot_normal'))
     model.add(LeakyReLU(alpha=1./20))
     model.add(BatchNormalization())
-
+ 
     model.add(Conv2D(256, (3, 3), padding='same', kernel_initializer='glorot_normal'))
+    model.add(LeakyReLU(alpha=1./20))
+    model.add(BatchNormalization())
+
+    # model.add(AveragePooling2D(pool_size=(2, 2), padding='same'))
+    model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
+    model.add(Dropout(0.4))
+
+    # model.add(Conv2D(128, (3, 3), padding='same', kernel_initializer='glorot_normal'))
+    # model.add(LeakyReLU(alpha=1./20))
+    # model.add(BatchNormalization())
+
+    model.add(Conv2D(512, (3, 3), padding='same', kernel_initializer='glorot_normal'))
     model.add(LeakyReLU(alpha=1./20))
     model.add(BatchNormalization())
 
     # model.add(AveragePooling2D(pool_size=(4, 4), strides=(3, 3), padding='same'))
     model.add(AveragePooling2D(pool_size=(3, 3), padding='same'))
-    model.add(Dropout(0.4))
+    model.add(Dropout(0.5))
 
     model.add(Flatten())
 
-    model.add(Dense(1536, activation='relu', kernel_initializer='glorot_normal'))
+    model.add(Dense(1024, activation='relu', kernel_initializer='glorot_normal'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.5))
+    model.add(Dense(512, activation='relu', kernel_initializer='glorot_normal'))
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
     model.add(Dense(7, activation='softmax', kernel_initializer='glorot_normal'))
@@ -89,7 +92,6 @@ def train_model(features, labels):
 
     checkpointer = ModelCheckpoint(
             filepath='model-{val_acc:.4f}.hdf5',
-            # filepath='model.hdf5',
             monitor='val_acc',
             verbose=1,
             save_best_only=True,
