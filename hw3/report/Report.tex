@@ -74,6 +74,8 @@
     \label{fig:cnn-training}
   \end{figure}
 
+  \newpage
+
 	\item (1\%) 承上題，請用與上述 CNN 接近的參數量，實做簡單的 DNN model。其模型架構、訓練過程和準確率為何？試與上題結果做比較，並說明你觀察到了什麼？
   \par 答：Figure \ref{fig:dnn-model-structure} 是我的 DNN model 的基本架構。這個模型的總參數數量為 6,581,255，與前一題的 CNN model 的 6,746,215 相去不遠。而這個 DNN model 的實作的細節，除了下方提及的 Activation Layer 和 Dropout 以外，其餘皆與前述的 CNN model 相同，好能比較他們之間的結果。
 
@@ -99,7 +101,7 @@
     \item \textbf{繼續訓練}這個模型，達到 650 epochs 後，這時的訓練時間已經與 CNN model 相去不遠，然而，DNN model 的訓練還沒收斂，看起來仍有不小的進步空間。透過觀察 Figure \ref{fig:dnn-training-650}，我們可以發現，它相較於 Figure \ref{fig:dnn-training} 中的曲線，幾乎沒有明顯改變，因此可以推斷，DNN model 要達到收斂，可能要再花上相當長的時間。所以，即使 DNN model 仍有進步的空間，要訓練好它所花的時間早已遠超 CNN model，且未必能達到更高的準確度。
   \end{itemize}
 
-  \begin{figure}[ht]
+  \begin{figure}[H]
     \begin{subfigure}[t]{.5\textwidth}
       \begin{tikzpicture}
         \begin{axis}[
@@ -132,7 +134,7 @@
     \label{fig:dnn-training}
   \end{figure}
 
-  \begin{figure}[ht]
+  \begin{figure}[H]
     \begin{subfigure}[t]{.5\textwidth}
       \begin{tikzpicture}
         \begin{axis}[
@@ -164,6 +166,8 @@
     \caption{DNN model training to 650 epochs}
     \label{fig:dnn-training-650}
   \end{figure}
+
+  \newpage
 
 	\item (1\%) 觀察答錯的圖片中，哪些 class 彼此間容易用混？（繪出 confusion matrix 分析）
 	\par 答：我使用 sklearn 套件當中的 \texttt{confusion\_matrix} 函式來算出 confusion matrix，並繪製出 Figure \ref{fig:confusioin-matrix}。
@@ -207,8 +211,82 @@
     \end{tabular}
   \end{table}
 
+  \newpage
+
 	\item (1\%) 從(1)(2)可以發現，使用 CNN 的確有些好處，試繪出其 saliency maps，觀察模型在做 classification 時，是 focus 在圖片的哪些部份？
-	\par 答：
+	\par 答：我從 \texttt{train.csv} 裡面的前 3000 筆資料當中，選了第 11, 15 和第 30 張圖片來繪製 saliency maps，分別是 Figure \ref{fig:image-10-comparison}, Figure \ref{fig:image-14-comparison} 和 Figure \ref{fig:image-29-comparison}。
+  \par 首先，Figure \ref{fig:image-10-comparison} 是一張標記為``生氣''的表情。所以，我認為判斷的重點在雙眼附近的皺紋，而 Figure \ref{fig:heatmap-10} 中的 heatmap 上高亮的區域正是那裡。而 Figure \ref{fig:image-14-comparison} 是一張標記為``快樂''的圖片。我認為判斷的重點是雙眼，以及嘴角的弧度，顯然地，從 Figure \ref{fig:partial-14} 來看，model 抓到的重點與我的判斷非常相像。最後，Figure \ref{fig:image-29-comparison} 是一張標記為``驚訝''的圖片。明顯地，瞪大的雙眼和大開的嘴巴是我們判斷的依據，而 Figure \ref{fig:partial-29} 中也清楚地顯示了模型是 focus 在這個部分。
+
+  \begin{figure}[ht]
+    \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{origin-10.png}
+      \caption{Origin image}
+      \label{fig:origin-10}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{partial-10.png}
+      \caption{Partial see}
+      \label{fig:partial-10}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{heatmap-10.png}
+      \caption{Heatmap}
+      \label{fig:heatmap-10}
+    \end{subfigure}
+    \caption{An ``Angry'' image in train.csv}
+    \label{fig:image-10-comparison}
+  \end{figure}
+
+  \begin{figure}[ht]
+    \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{origin-14.png}
+      \caption{Origin image}
+      \label{fig:origin-14}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{partial-14.png}
+      \caption{Partial see}
+      \label{fig:partial-14}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{heatmap-14.png}
+      \caption{Heatmap}
+      \label{fig:heatmap-14}
+    \end{subfigure}
+    \caption{A ``Happy'' image in train.csv}
+    \label{fig:image-14-comparison}
+  \end{figure}
+
+  \begin{figure}[ht]
+    \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{origin-29.png}
+      \caption{Origin image}
+      \label{fig:origin-29}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{partial-29.png}
+      \caption{Partial see}
+      \label{fig:partial-29}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{heatmap-29.png}
+      \caption{Heatmap}
+      \label{fig:heatmap-29}
+    \end{subfigure}
+    \caption{A ``Surprise'' image in train.csv}
+    \label{fig:image-29-comparison}
+  \end{figure}
+
+  \newpage
 
 	\item (1\%) 承(1)(2)，利用上課所提到的 gradient ascent 方法，觀察特定層的 filter 最容易被哪種圖片 activate。
 	\par 答：
