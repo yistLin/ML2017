@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from keras.models import load_model
 from keras import backend as K
+from keras.utils import generic_utils
 
 def read_features(filename):
     col0 = []
@@ -26,15 +27,13 @@ def normalize(x):
 def deprocess_image(x):
     # normalize tensor: center on 0., ensure std is 0.1
     x -= x.mean()
-    x /= (x.std() + 1e-5)
+    x /= (x.std() + 1e-10)
     x *= 0.1
 
-    # clip to [0, 1]
     x += 0.5
     x = np.clip(x, 0, 1)
 
-    # convert to RGB array
-    x *= 255
+    x *= 255.0
     x = np.clip(x, 0, 255).astype('uint8')
     return x
 
@@ -42,7 +41,7 @@ def grad_ascent(num_step, record_freq, input_image_data, iter_func):
     filter_images = []
     for i in range(num_step):
         loss_val, grad_val = iter_func([input_image_data, 0])
-        input_image_data += grad_val
+        input_image_data += grad_val * 0.05
         if i % record_freq == 0:
             filter_images.append((deprocess_image(input_image_data.squeeze()), loss_val))
     return filter_images
@@ -54,42 +53,48 @@ def main():
     model = load_model(model_path)
     print('Model loaded')
 
-    layer_dict = dict([layer.name, layer] for layer in model.layers[1:])
+    layer_dict = dict([layer.name, layer] for layer in model.layers[:])
     print('layer_dict =', layer_dict.keys)
 
     input_img = model.input
-    name_ls = ['conv2d_2']
+    name_ls = ['leaky_re_lu_1']
 
     NUM_STEPS = 90
     RECORD_FREQ = 30
-    nb_filter = 32
+    nb_filter = 16
     collect_layers = [ layer_dict[name].output for name in name_ls ]
 
     for cnt, c in enumerate(collect_layers):
-        print('Drawing image of layer: {}'.format(name_ls[cnt]))
+        print('Processing layer: {}'.format(name_ls[cnt]))
 
         filter_imgs = []
+        print('Gradient ascent the filter')
+        progbar = generic_utils.Progbar(nb_filter)
         for filter_idx in range(nb_filter):
             input_img_data = np.random.random((1, 48, 48, 1))
             target = K.mean(c[:, :, :, filter_idx])
             grads = normalize(K.gradients(target, input_img)[0])
             iterate = K.function([input_img, K.learning_phase()], [target, grads])
-
             filter_imgs.append(grad_ascent(NUM_STEPS, RECORD_FREQ, input_img_data, iterate))
+            # print progress
+            progbar.add(1)
 
-        print('NUM_STEPS//RECORD_FREQ =', NUM_STEPS//RECORD_FREQ)
+        print('Draw the image')
         for it in range(NUM_STEPS//RECORD_FREQ):
             fig = plt.figure(figsize=(14, 8))
+            print('Dealing filter state in epoch {}'.format(it*RECORD_FREQ))
+            progbar = generic_utils.Progbar(nb_filter)
             for i in range(nb_filter):
                 ax = fig.add_subplot(nb_filter/8, 8, i+1)
-                ax.imshow(filter_imgs[i][it][0], cmap='gray')
+                ax.imshow(filter_imgs[i][it][0], cmap='Blues')
                 plt.xticks(np.array([]))
                 plt.yticks(np.array([]))
-                print('filter_imgs[{}][{}][1] ='.format(i, it), filter_imgs[i][it][1])
                 plt.xlabel('{:.3f}'.format(filter_imgs[i][it][1]))
                 plt.tight_layout()
+                # print progress
+                progbar.add(1, values=[('subplot', i)])
             # fig.suptitle('Filters of layer {} (# Ascent Epoch {} )'.format(name_ls[cnt], it*RECORD_FREQ))
-            fig.savefig('{}_e{}'.format(name_ls[cnt], it*RECORD_FREQ), transparent=True)
+            fig.savefig('{}_e{}'.format(name_ls[cnt], it*RECORD_FREQ))
 
 if __name__ == "__main__":
     main()
