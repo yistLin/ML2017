@@ -31,7 +31,7 @@ def main():
     print('layer_dict =', layer_dict)
 
     input_img = model.input
-    name_ls = ['conv2d_2', 'max_pooling2d_1', 'leaky_re_lu_1']
+    name_ls = ['leaky_re_lu_1', 'leaky_re_lu_2']
     collect_layers = [ K.function([input_img, K.learning_phase()], [layer_dict[name].output]) for name in name_ls ]
 
     # Load data
@@ -44,7 +44,7 @@ def main():
         fig = plt.figure(figsize=(14, 8))
         nb_filter = im[0].shape[3]
         for i in range(nb_filter):
-            ax = fig.add_subplot(nb_filter/16, 16, i+1)
+            ax = fig.add_subplot(nb_filter/8, 8, i+1)
             ax.imshow(im[0][0, :, :, i], cmap='YlGnBu')
             plt.xticks(np.array([]))
             plt.yticks(np.array([]))

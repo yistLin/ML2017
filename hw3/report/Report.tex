@@ -289,7 +289,57 @@
   \newpage
 
 	\item (1\%) 承(1)(2)，利用上課所提到的 gradient ascent 方法，觀察特定層的 filter 最容易被哪種圖片 activate。
-	\par 答：
+	\par 答：首先是 Figure \ref{fig:ga-white-noise}，這整組圖片都是透過 gradient ascent 得到最容易激活 Leaky ReLU Layer 的圖片。我們可以觀察到，從 Figure \ref{fig:leaky_relu_1_e60} 上，也就是第一層當中，大多數圖片紋理都比較粗糙。也就是說，底層的 filter，基本上是在抓取圖片當中臉部的輪廓。而到了較上層的 filter，也就是在 Figure \ref{fig:leaky_relu_4_e60} 中，已經可以看到一些很重要的臉部特徵，如：眼睛、耳朵和皺紋等等。
+
+  \begin{figure}[H]
+    \begin{subfigure}[t]{0.5\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{leaky_re_lu_1_e60.png}
+      \caption{Layer: leaky relu 1 (epoch 60)}
+      \label{fig:leaky_relu_1_e60}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.5\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{leaky_re_lu_2_e60.png}
+      \caption{Layer: leaky relu 2 (epoch 60)}
+      \label{fig:leaky_relu_2_e60}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.5\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{leaky_re_lu_3_e60.png}
+      \caption{Layer: leaky relu 3 (epoch 60)}
+      \label{fig:leaky_relu_3_e60}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.5\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{leaky_re_lu_4_e60.png}
+      \caption{Layer: leaky relu 4 (epoch 60)}
+      \label{fig:leaky_relu_4_e60}
+    \end{subfigure}
+    \caption{Gradient ascent from white noise}
+    \label{fig:ga-white-noise}
+  \end{figure}
+
+  \par 而 Figure \ref{fig:filter-output}，則是將 \texttt{train.csv} 當中的第 30 張圖片（屬於模型訓練時的 validation set）餵進去後，第一和第二層 Leaky ReLU Layer 輸出的結果。
+
+  \begin{figure}[H]
+    \begin{subfigure}[t]{0.5\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{layer_leaky_re_lu_1.png}
+      \caption{Layer: leaky relu 1}
+      \label{fig:leaky_relu_1_output}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.5\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{layer_leaky_re_lu_2.png}
+      \caption{Layer: leaky relu 2}
+      \label{fig:leaky_relu_2_output}
+    \end{subfigure}
+    \caption{Filter output (Image 29)}
+    \label{fig:filter-output}
+  \end{figure}
+
+  \newpage
 
 	\item[Bonus] (1\%) 從 training data 中移除部份 label，實做 semi-supervised learning。
 

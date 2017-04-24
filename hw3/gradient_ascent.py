@@ -57,11 +57,11 @@ def main():
     print('layer_dict =', layer_dict.keys)
 
     input_img = model.input
-    name_ls = ['leaky_re_lu_1']
+    name_ls = ['leaky_re_lu_3', 'leaky_re_lu_4']
 
     NUM_STEPS = 90
     RECORD_FREQ = 30
-    nb_filter = 16
+    nb_filter = 32
     collect_layers = [ layer_dict[name].output for name in name_ls ]
 
     for cnt, c in enumerate(collect_layers):
@@ -71,7 +71,7 @@ def main():
         print('Gradient ascent the filter')
         progbar = generic_utils.Progbar(nb_filter)
         for filter_idx in range(nb_filter):
-            input_img_data = np.random.random((1, 48, 48, 1))
+            input_img_data = np.random.random_sample((1, 48, 48, 1))
             target = K.mean(c[:, :, :, filter_idx])
             grads = normalize(K.gradients(target, input_img)[0])
             iterate = K.function([input_img, K.learning_phase()], [target, grads])
@@ -92,7 +92,7 @@ def main():
                 plt.xlabel('{:.3f}'.format(filter_imgs[i][it][1]))
                 plt.tight_layout()
                 # print progress
-                progbar.add(1, values=[('subplot', i)])
+                progbar.add(1)
             # fig.suptitle('Filters of layer {} (# Ascent Epoch {} )'.format(name_ls[cnt], it*RECORD_FREQ))
             fig.savefig('{}_e{}'.format(name_ls[cnt], it*RECORD_FREQ))
 
