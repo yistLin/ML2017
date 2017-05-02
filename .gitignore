@@ -5,6 +5,5 @@
 *.synctex.gz
 .DS_Store
 *.csv
-*.hdf5
 *.png
 *.txt
