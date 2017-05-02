@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Dense, Dropout, Activation, Flatten, BatchNormalization
 from keras.callbacks import ModelCheckpoint
 
 def read_features(filename):
@@ -38,6 +38,8 @@ def train_model(features, labels):
 
     model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
     model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.2))
 
     model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
     model.add(BatchNormalization())
@@ -63,7 +65,7 @@ def train_model(features, labels):
             period=1)
 
     model.fit(X, Y,
-            epochs=25,
+            epochs=3000,
             batch_size=128,
             validation_split=0.2,
             callbacks=[checkpointer])

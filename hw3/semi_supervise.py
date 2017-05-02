@@ -21,12 +21,13 @@ def read_features(filename):
 
 def train_model(features, labels):
     # Reshape data
-    X = features.reshape(-1, 48, 48, 1)
+    X = features.reshape(-1, 48, 48, 1).astype('float32')
     Y = np.zeros(shape=(labels.shape[0], 7))
     Y[np.arange(labels.shape[0]), labels] = 1
 
     # Normalize training data between 0 and 1
     X = X / 255.
+    print('X.shape =', X.shape)
 
     # Separate training, validation, and non-labeled data
     X_valid, X_train = X[:3000], X[3000:]
@@ -40,7 +41,6 @@ def train_model(features, labels):
 
     # Image data generator
     datagen = ImageDataGenerator(
-        rescale=1./255,
         rotation_range=30,
         shear_range=0.2,
         zoom_range=0.2,
@@ -93,10 +93,10 @@ def train_model(features, labels):
             loss='categorical_crossentropy',
             metrics=['accuracy'])
 
-    for phase in range(500):
+    for phase in range(5000):
         # Save checkpoint
         checkpointer = ModelCheckpoint(
-                filepath='semi-model-ph%d.hdf5' % phase,
+                filepath='semi-model.hdf5',
                 monitor='val_acc',
                 verbose=1,
                 save_best_only=True,
@@ -105,14 +105,14 @@ def train_model(features, labels):
                 period=1)
 
         # Save training process
-        csv_logger = CSVLogger('semi-training-ph%d.log' % phase, separator=',', append=False)
+        csv_logger = CSVLogger('semi-training.log', separator=',', append=True)
 
         # Training
         model.fit_generator(
                 datagen.flow(X_lab, Y_lab, batch_size=128),
                 steps_per_epoch=2*len(X_lab)//128,
                 validation_data=(X_valid, Y_valid),
-                epochs=10,
+                epochs=1,
                 callbacks=[checkpointer, csv_logger])
 
         # Predicting
@@ -121,11 +121,22 @@ def train_model(features, labels):
         print('Predicting...')
         predictions = model.predict(X_nolab)
         confidences = np.max(predictions, axis=1)
-        Y_newlab = np.argmax(predictions[np.where(confidences > 0.7)], axis=1)
-        X_newlab = X_nolab[np.where(confidences > 0.7)]
-        X_nolab = X_nolab[np.where(confidences <= 0.7)]
-        X_lab = np.concatenate((X_lab, X_newlab))
-        Y_lab = np.concatenate((Y_lab, Y_newlab))
+        
+        Y_argmax = np.argmax(predictions[np.where(confidences > 0.5)], axis=1).astype('uint8')
+        Y_newlab = np.zeros(shape=(len(Y_argmax), 7))
+        Y_newlab[np.arange(len(Y_argmax)), Y_argmax] = 1
+        
+        X_newlab = X_nolab[np.where(confidences > 0.5)]
+        X_nolab = X_nolab[np.where(confidences <= 0.5)]
+        
+        print('X_lab.shape    =', X_lab.shape)
+        print('X_newlab.shape =', X_newlab.shape)
+        print('Y_lab.shape    =', Y_lab.shape)
+        print('Y_newlab.shape =', Y_newlab.shape)
+        
+        X_lab = np.concatenate((X_lab, X_newlab), axis=0)
+        Y_lab = np.concatenate((Y_lab, Y_newlab), axis=0)
+        
         print('# of X_newlab =', len(X_newlab))
         print('# of X_nolab  =', len(X_nolab))
 
