@@ -33,7 +33,7 @@
 
   \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.9\linewidth]{cnn_model_structure.png}
+    \includegraphics[width=0.9\linewidth]{images/cnn_model_structure.png}
     \caption{CNN model structure}
     \label{fig:cnn-model-structure}
   \end{figure}
@@ -48,8 +48,8 @@
         xlabel = Epoch,
         legend pos = north east,
         ymajorgrids]
-      \addplot[color=blue] table [x=epoch, y=loss, mark=none, col sep=comma] {cnn-training.csv};
-      \addplot[color=red] table [x=epoch, y=valloss, mark=none, col sep=comma] {cnn-training.csv};
+      \addplot[color=blue] table [x=epoch, y=loss, mark=none, col sep=comma] {csvs/cnn-training.csv};
+      \addplot[color=red] table [x=epoch, y=valloss, mark=none, col sep=comma] {csvs/cnn-training.csv};
       \legend{training set,validation set}
       \end{axis}
     \end{tikzpicture}
@@ -62,8 +62,8 @@
           xlabel = Epoch,
           legend pos = south east,
           ymajorgrids]
-        \addplot[color=blue] table [x=epoch, y=acc, mark=none, col sep=comma] {cnn-training.csv};
-        \addplot[color=red] table [x=epoch, y=valacc, mark=none, col sep=comma] {cnn-training.csv};
+        \addplot[color=blue] table [x=epoch, y=acc, mark=none, col sep=comma] {csvs/cnn-training.csv};
+        \addplot[color=red] table [x=epoch, y=valacc, mark=none, col sep=comma] {csvs/cnn-training.csv};
         \legend{training set,validation set}
         \end{axis}
       \end{tikzpicture}
@@ -81,7 +81,7 @@
 
   \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.9\linewidth]{dnn_model_structure.png}
+    \includegraphics[width=0.9\linewidth]{images/dnn_model_structure.png}
     \caption{DNN model structure}
     \label{fig:dnn-model-structure}
   \end{figure}
@@ -108,8 +108,8 @@
           xlabel = Epoch,
           legend pos = north east,
           ymajorgrids]
-        \addplot[color=blue] table [x=epoch, y=loss, mark=none, col sep=comma] {dnn-training.csv};
-        \addplot[color=red] table [x=epoch, y=valloss, mark=none, col sep=comma] {dnn-training.csv};
+        \addplot[color=blue] table [x=epoch, y=loss, mark=none, col sep=comma] {csvs/dnn-training.csv};
+        \addplot[color=red] table [x=epoch, y=valloss, mark=none, col sep=comma] {csvs/dnn-training.csv};
         \legend{training set,validation set}
         \end{axis}
       \end{tikzpicture}
@@ -122,8 +122,8 @@
           xlabel = Epoch,
           legend pos = south east,
           ymajorgrids]
-        \addplot[color=blue] table [x=epoch, y=acc, mark=none, col sep=comma] {dnn-training.csv};
-        \addplot[color=red] table [x=epoch, y=valacc, mark=none, col sep=comma] {dnn-training.csv};
+        \addplot[color=blue] table [x=epoch, y=acc, mark=none, col sep=comma] {csvs/dnn-training.csv};
+        \addplot[color=red] table [x=epoch, y=valacc, mark=none, col sep=comma] {csvs/dnn-training.csv};
         \legend{training set,validation set}
         \end{axis}
       \end{tikzpicture}
@@ -141,8 +141,8 @@
           xlabel = Epoch,
           legend pos = north east,
           ymajorgrids]
-        \addplot[color=blue] table [x=epoch, y=loss, mark=none, col sep=comma] {dnn-training-650.csv};
-        \addplot[color=red] table [x=epoch, y=valloss, mark=none, col sep=comma] {dnn-training-650.csv};
+        \addplot[color=blue] table [x=epoch, y=loss, mark=none, col sep=comma] {csvs/dnn-training-650.csv};
+        \addplot[color=red] table [x=epoch, y=valloss, mark=none, col sep=comma] {csvs/dnn-training-650.csv};
         \legend{training set,validation set}
         \end{axis}
       \end{tikzpicture}
@@ -155,8 +155,8 @@
           xlabel = Epoch,
           legend pos = south east,
           ymajorgrids]
-        \addplot[color=blue] table [x=epoch, y=acc, mark=none, col sep=comma] {dnn-training-650.csv};
-        \addplot[color=red] table [x=epoch, y=valacc, mark=none, col sep=comma] {dnn-training-650.csv};
+        \addplot[color=blue] table [x=epoch, y=acc, mark=none, col sep=comma] {csvs/dnn-training-650.csv};
+        \addplot[color=red] table [x=epoch, y=valacc, mark=none, col sep=comma] {csvs/dnn-training-650.csv};
         \legend{training set,validation set}
         \end{axis}
       \end{tikzpicture}
@@ -174,7 +174,7 @@
 
   \begin{figure}[ht]
     \centering
-    \includegraphics[width=\linewidth]{conf_mat_normalized.png}
+    \includegraphics[width=\linewidth]{images/conf_mat_normalized.png}
     \caption{Normalized Confusion Matrix}
     \label{fig:confusioin-matrix}
   \end{figure}
@@ -184,13 +184,13 @@
   \begin{figure}[ht]
     \begin{subfigure}[t]{0.5\textwidth}
       \centering
-      \includegraphics[width=0.8\linewidth]{train-image-2.png}
+      \includegraphics[width=0.8\linewidth]{images/train-image-2.png}
       \caption{Predicted as ``Sad''}
       \label{fig:train-image-2}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
       \centering
-      \includegraphics[width=0.8\linewidth]{train-image-6.png}
+      \includegraphics[width=0.8\linewidth]{images/train-image-6.png}
       \caption{Predicted as ``Fear''}
       \label{fig:train-image-6}
     \end{subfigure}
@@ -220,19 +220,19 @@
   \begin{figure}[ht]
     \begin{subfigure}[t]{0.32\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{origin-10.png}
+      \includegraphics[width=\linewidth]{images/origin-10.png}
       \caption{Origin image}
       \label{fig:origin-10}
     \end{subfigure}
     \begin{subfigure}[t]{0.32\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{partial-10.png}
+      \includegraphics[width=\linewidth]{images/partial-10.png}
       \caption{Partial see}
       \label{fig:partial-10}
     \end{subfigure}
     \begin{subfigure}[t]{0.32\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{heatmap-10.png}
+      \includegraphics[width=\linewidth]{images/heatmap-10.png}
       \caption{Heatmap}
       \label{fig:heatmap-10}
     \end{subfigure}
@@ -243,19 +243,19 @@
   \begin{figure}[ht]
     \begin{subfigure}[t]{0.32\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{origin-14.png}
+      \includegraphics[width=\linewidth]{images/origin-14.png}
       \caption{Origin image}
       \label{fig:origin-14}
     \end{subfigure}
     \begin{subfigure}[t]{0.32\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{partial-14.png}
+      \includegraphics[width=\linewidth]{images/partial-14.png}
       \caption{Partial see}
       \label{fig:partial-14}
     \end{subfigure}
     \begin{subfigure}[t]{0.32\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{heatmap-14.png}
+      \includegraphics[width=\linewidth]{images/heatmap-14.png}
       \caption{Heatmap}
       \label{fig:heatmap-14}
     \end{subfigure}
@@ -266,19 +266,19 @@
   \begin{figure}[ht]
     \begin{subfigure}[t]{0.32\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{origin-29.png}
+      \includegraphics[width=\linewidth]{images/origin-29.png}
       \caption{Origin image}
       \label{fig:origin-29}
     \end{subfigure}
     \begin{subfigure}[t]{0.32\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{partial-29.png}
+      \includegraphics[width=\linewidth]{images/partial-29.png}
       \caption{Partial see}
       \label{fig:partial-29}
     \end{subfigure}
     \begin{subfigure}[t]{0.32\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{heatmap-29.png}
+      \includegraphics[width=\linewidth]{images/heatmap-29.png}
       \caption{Heatmap}
       \label{fig:heatmap-29}
     \end{subfigure}
@@ -294,25 +294,25 @@
   \begin{figure}[H]
     \begin{subfigure}[t]{0.5\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{leaky_re_lu_1_e60.png}
+      \includegraphics[width=\linewidth]{images/leaky_re_lu_1_e60.png}
       \caption{Layer: leaky relu 1 (epoch 60)}
       \label{fig:leaky_relu_1_e60}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{leaky_re_lu_2_e60.png}
+      \includegraphics[width=\linewidth]{images/leaky_re_lu_2_e60.png}
       \caption{Layer: leaky relu 2 (epoch 60)}
       \label{fig:leaky_relu_2_e60}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{leaky_re_lu_3_e60.png}
+      \includegraphics[width=\linewidth]{images/leaky_re_lu_3_e60.png}
       \caption{Layer: leaky relu 3 (epoch 60)}
       \label{fig:leaky_relu_3_e60}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{leaky_re_lu_4_e60.png}
+      \includegraphics[width=\linewidth]{images/leaky_re_lu_4_e60.png}
       \caption{Layer: leaky relu 4 (epoch 60)}
       \label{fig:leaky_relu_4_e60}
     \end{subfigure}
@@ -325,25 +325,123 @@
   \begin{figure}[H]
     \begin{subfigure}[t]{0.5\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{layer_leaky_re_lu_1.png}
+      \includegraphics[width=\linewidth]{images/layer_leaky_re_lu_1.png}
       \caption{Layer: leaky relu 1}
       \label{fig:leaky_relu_1_output}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
       \centering
-      \includegraphics[width=\linewidth]{layer_leaky_re_lu_2.png}
+      \includegraphics[width=\linewidth]{images/layer_leaky_re_lu_2.png}
       \caption{Layer: leaky relu 2}
       \label{fig:leaky_relu_2_output}
     \end{subfigure}
-    \caption{Filter output (Image 29)}
+    \caption{Filters output (image id 29)}
     \label{fig:filter-output}
   \end{figure}
 
   \newpage
 
 	\item[Bonus] (1\%) 從 training data 中移除部份 label，實做 semi-supervised learning。
+  \par 答：為了實作 semi-supervised learning，我從 training set 當中挪去了 12000 筆資料的 label，而 validation set 則是與前述相同的 3000 筆資料，然後用剩餘的資料開始訓練模型。模型的架構與第一題描述的完全相同，好能夠比較兩者間的差異。
+  \par 訓練過程中，每訓練完一個 epoch，我就對沒有 label 的圖片進行預測，如果預測出來，屬於某個類別的機率大於 50\%，我就將它加入 training set。Figure \ref{fig:semi-training} 呈現的是 semi-supervised learning 的訓練過程，如果比較 Figure \ref{fig:semi-phase-acc} 和 Figure \ref{fig:cnn-epoch-acc}，可以明顯看出，前者明顯弱了不少，即使在相同 epoch 數量下，準確率也與後者有相當差異。而 Figure \ref{fig:semi-nolabel-data} 則是訓練過程中，剩餘的 non-label 資料數量。
 
-	\item[Bonus] (1\%) 在 Problem 5 中，提供了3個 hint，可以嘗試實作及觀察（但也可以不限於 hint 所提到的方向，也可以自己去研究更多關於 CNN 細節的資料），並說明你做了些什麼？（完成1個：+0.4\%，完成2個：+0.7\%，完成3個：+1\%）
+  \begin{figure}[H]
+    \begin{subfigure}[t]{.5\textwidth}
+      \begin{tikzpicture}
+        \begin{axis}[xlabel = Phase, legend pos = north east, ymajorgrids]
+        \addplot[color=blue] table [x=phase, y=loss, mark=none, col sep=comma] {csvs/semi-training.csv};
+        \addplot[color=red] table [x=phase, y=valloss, mark=none, col sep=comma] {csvs/semi-training.csv};
+        \legend{training set,validation set}
+        \end{axis}
+      \end{tikzpicture}
+      \caption{Cross-entropy loss}
+      \label{fig:semi-phase-loss}
+    \end{subfigure}
+    \begin{subfigure}[t]{.5\textwidth}
+      \begin{tikzpicture}
+        \begin{axis}[xlabel = Phase, legend pos = south east, ymajorgrids]
+        \addplot[color=blue] table [x=phase, y=acc, mark=none, col sep=comma] {csvs/semi-training.csv};
+        \addplot[color=red] table [x=phase, y=valacc, mark=none, col sep=comma] {csvs/semi-training.csv};
+        \legend{training set,validation set}
+        \end{axis}
+      \end{tikzpicture}
+      \caption{Prediction accuracy}
+      \label{fig:semi-phase-acc}
+    \end{subfigure}
+    \caption{Semi-supervised training}
+    \label{fig:semi-training}
+  \end{figure}
+
+  \begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[xlabel = Phase, ylabel = \# of non-label data, ymajorgrids]
+      \addplot[color=blue] table [x=phase, y=nolabel, mark=none, col sep=comma] {csvs/semi-training.csv};
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Semi-supervised learning (non-label data)}
+    \label{fig:semi-nolabel-data}
+  \end{figure}
+
+  \newpage
+
+  \item[Bonus] (1\%) 在 Problem 5 中，提供了3個 hint，可以嘗試實作及觀察（但也可以不限於 hint 所提到的方向，也可以自己去研究更多關於 CNN 細節的資料），並說明你做了些什麼？（完成1個：+0.4\%，完成2個：+0.7\%，完成3個：+1\%）
+
+  \begin{enumerate}
+    \item 透過視覺化 Filters 分析一個較弱的模型。
+    \par 答：相較於在 Problem 5 中使用的模型，我所比較的模型在 valid set 上只有 52\% 的準確率，相較於前面提及的模型（在 valid set 上有 70\% 準確率）著實弱了不少。Figure \ref{fig:weak-ga-white-noise} 是從 white noise 圖片透過 gradient ascent 後得到的。而 Figure \ref{fig:weak-filter-output} 與 Problem 5 中 Figure \ref{fig:filter-output} 所使用的是同一張圖片。
+    \par 經過一番觀察和比較，我認為從 Figure \ref{fig:leaky_relu_4_e60} 和 Figure \ref{fig:weak_leaky_relu_4_e60} 兩張圖中，可以看出後者的 filters 有較多仍是大範圍分布的紋理，而較少有可被明顯識別的臉部特徵。至於 Figure \ref{fig:filter-output} 和 Figure \ref{fig:weak-filter-output} 之間，可以看出後者多呈現出原先圖片上的人的臉部輪廓，沒有得到更高層次的臉部特徵，相較之下，從前者的 filter output 裡，我們較不容易看出原圖片的個人臉部輪廓。因此，可以推斷前者在表情特徵的抽取上做得更好。
+
+    \begin{figure}[H]
+      \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/weak_leaky_re_lu_1_e60.png}
+        \caption{Layer: leaky relu 1 (epoch 60)}
+        \label{fig:weak_leaky_relu_1_e60}
+      \end{subfigure}
+      \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/weak_leaky_re_lu_2_e60.png}
+        \caption{Layer: leaky relu 2 (epoch 60)}
+        \label{fig:weak_leaky_relu_2_e60}
+      \end{subfigure}
+      \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/weak_leaky_re_lu_3_e60.png}
+        \caption{Layer: leaky relu 3 (epoch 60)}
+        \label{fig:weak_leaky_relu_3_e60}
+      \end{subfigure}
+      \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/weak_leaky_re_lu_4_e60.png}
+        \caption{Layer: leaky relu 4 (epoch 60)}
+        \label{fig:weak_leaky_relu_4_e60}
+      \end{subfigure}
+      \caption{Gradient ascent from white noise (weak model)}
+      \label{fig:weak-ga-white-noise}
+    \end{figure}
+
+    \begin{figure}[H]
+      \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/weak_layer_leaky_re_lu_1.png}
+        \caption{Layer: leaky relu 1}
+        \label{fig:weak_leaky_relu_1_output}
+      \end{subfigure}
+      \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/weak_layer_leaky_re_lu_2.png}
+        \caption{Layer: leaky relu 2}
+        \label{fig:weak_leaky_relu_2_output}
+      \end{subfigure}
+      \caption{Filters output (weak model, image id 29)}
+      \label{fig:weak-filter-output}
+    \end{figure}
+
+    \item 找出最能激活特定類別的圖片。
+
+    \item 從一張正常照片，透過 gradient ascent 產生 adversial image。
+  \end{enumerate}
 
 \end{enumerate}
 \end{document}
