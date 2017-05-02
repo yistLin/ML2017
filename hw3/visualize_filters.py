@@ -43,6 +43,7 @@ def main():
         im = fn([photo, 0])
         fig = plt.figure(figsize=(14, 8))
         nb_filter = im[0].shape[3]
+        nb_filter = 32
         for i in range(nb_filter):
             ax = fig.add_subplot(nb_filter/8, 8, i+1)
             ax.imshow(im[0][0, :, :, i], cmap='YlGnBu')

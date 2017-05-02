@@ -57,7 +57,7 @@ def main():
     print('layer_dict =', layer_dict.keys)
 
     input_img = model.input
-    name_ls = ['leaky_re_lu_3', 'leaky_re_lu_4']
+    name_ls = ['leaky_re_lu_1', 'leaky_re_lu_2', 'leaky_re_lu_3', 'leaky_re_lu_4']
 
     NUM_STEPS = 90
     RECORD_FREQ = 30
