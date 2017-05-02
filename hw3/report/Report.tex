@@ -439,8 +439,44 @@
     \end{figure}
 
     \item 找出最能激活特定類別的圖片。
+    \par 答：參考助教給的網站，我從 white noise 圖片，透過 gradient ascent 得到一張最能激活 ``Happy'' 類別的圖片（模型預測的機率分佈為 Table \ref{tab:happy-prob-distribution}），即 Figure \ref{fig:max-happy-image}。為了使圖片能夠有些看得出的紋路，我每隔幾個回合就加上 gaussian filter 和 median filter，不然原先出來的圖片看起來只是一堆雜點。然而，從這張圖片上我們還是難以看出任何足以辨識出的表情。
+
+    \begin{table}[ht]
+      \centering
+      \caption{Probability distribution}
+      \label{tab:happy-prob-distribution}
+      \begin{tabular}{|c|c|c|c|c|c|c|c|}\hline
+      \# & Angry & Disgust & Fear & Happy & Sad & Surprice & Neutral \\\hline
+      Figure \ref{fig:max-happy-image} & 0.0 & 0.0 & 0.0 & 0.99 & 0.0 & 0.0 & 0.0 \\\hline
+      \end{tabular}
+    \end{table}
+
+    \begin{figure}[ht]
+      \centering
+      \includegraphics[width=.4\linewidth]{images/max-Happy-ep2500.png}
+      \caption{A happy image (ascent from white noise)}
+      \label{fig:max-happy-image}
+    \end{figure}
 
     \item 從一張正常照片，透過 gradient ascent 產生 adversial image。
+    \par 答：跟上一題的做法類似，只是這次是將一張 validation set 裡的圖片作為 input，透過 gradient ascent 得到一張新的圖片，而被模型判斷為另一個類別。我選擇 validation set 裡的第十五張圖片，即 Figure \ref{fig:adversial-happy-image}，而模型有 99\% 信心判定它屬於 ``Happy''，經過 2500 個 epoch 的 gradient ascent 後，得到 Figure \ref{fig:adversial-sad-image}，而它被模型判定為 ``Sad''，且同樣有 99\% 的信心。
+
+    \begin{figure}[H]
+      \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.8\linewidth]{images/adversial-id14-Sad-ep0.png}
+        \caption{A ``Happy'' image}
+        \label{fig:adversial-happy-image}
+      \end{subfigure}
+      \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.8\linewidth]{images/adversial-id14-Sad-ep2500.png}
+        \caption{A ``Sad'' image}
+        \label{fig:adversial-sad-image}
+      \end{subfigure}
+      \caption{A image from ``Happy'' to ``Sad'' (image id 29)}
+      \label{fig:adversial-images}
+    \end{figure}
   \end{enumerate}
 
 \end{enumerate}
