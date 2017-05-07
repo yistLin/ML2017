@@ -3,14 +3,17 @@ import argparse
 import word2vec
 import nltk
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
+
+embedding_size = 100
 
 def training(data_path):
     phrase_path = data_path + '.phrase'
     model_path = data_path + '.bin'
 
     word2vec.word2phrase(data_path, phrase_path, verbose=True)
-    word2vec.word2vec(phrase_path, model_path, size=100, verbose=True)
+    word2vec.word2vec(phrase_path, model_path, size=embedding_size, verbose=True)
 
 def pick_vocabs(vocabs, nb_keep=100):
     KEEP_TAGS = ['JJ', 'NN', 'NNP', 'NNS']
@@ -20,20 +23,15 @@ def pick_vocabs(vocabs, nb_keep=100):
     word_cnt = 0
     for vocab in vocabs:
         if len(vocab) < 2:
-            # print('{:<16} is too short (length < 2)'.format(vocab))
             continue
         elif any(punc in vocab for punc in IGNORE_PUNC):
-            # print('{:<16} contains IGNORE_PUNC'.format(vocab))
             continue
 
         voc, tag = nltk.pos_tag([vocab])[0]
         if tag not in KEEP_TAGS:
-            # print('{:<16} tagged as {}, dropped'.format(voc, tag))
             continue
 
-        # print('{:<16} tagged as {}, keeped'.format(voc, tag))
         keep_vocabs.append(vocab)
-
         word_cnt += 1
         if word_cnt == nb_keep:
             break
@@ -44,9 +42,21 @@ def plot_model(model_path):
     # load the model
     model = word2vec.load(model_path)
     vocabs = model.vocab
+    print('word2vec model loaded')
 
     # keep frequently appeared vocabularies
-    keep_vocabs = pick_vocabs(vocabs, nb_keep=500)
+    nb_vocab = 500
+    keep_vocabs = pick_vocabs(vocabs, nb_keep=nb_vocab)
+    voc_vectors = np.array([model[voc] for voc in keep_vocabs])
+    print('vocab vectors gotten')
+
+    # reduce the dimension
+    tsne = TSNE(n_components=2, random_state=0)
+    voc_vectors_new = tsne.fit_transform(voc_vectors)
+    print('vocab vectors reduced to 2-dim vectors')
+
+    plt.plot(*zip(*voc_vectors_new), marker='o', ls='')
+    plt.show()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Visualization of Word Vectors.')
