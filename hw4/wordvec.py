@@ -2,8 +2,8 @@
 import argparse
 import word2vec
 import nltk
+import random
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 
 embedding_size = 100
@@ -39,14 +39,17 @@ def pick_vocabs(vocabs, nb_keep=100):
     return keep_vocabs
 
 def plot_model(model_path):
+    import matplotlib.pyplot as plt
+    from adjustText import adjust_text
+
     # load the model
     model = word2vec.load(model_path)
     vocabs = model.vocab
     print('word2vec model loaded')
 
     # keep frequently appeared vocabularies
-    nb_vocab = 500
-    keep_vocabs = pick_vocabs(vocabs, nb_keep=nb_vocab)
+    nb_vocab = 1000
+    keep_vocabs = np.array(pick_vocabs(vocabs, nb_keep=nb_vocab))
     voc_vectors = np.array([model[voc] for voc in keep_vocabs])
     print('vocab vectors gotten')
 
@@ -55,7 +58,17 @@ def plot_model(model_path):
     voc_vectors_new = tsne.fit_transform(voc_vectors)
     print('vocab vectors reduced to 2-dim vectors')
 
-    plt.plot(*zip(*voc_vectors_new), marker='o', ls='')
+    xs = voc_vectors_new[:, 0] * 10.
+    ys = voc_vectors_new[:, 1] * 10.
+
+    rand_seq = sorted(random.sample(range(0, nb_vocab), 50))
+
+    plt.scatter(xs[rand_seq], ys[rand_seq])
+
+    texts = []
+    for x, y, voc in zip(xs[rand_seq], ys[rand_seq], keep_vocabs[rand_seq]):
+        texts.append(plt.text(x, y, voc))
+    adjust_text(texts, arrowprops=dict(arrowstyle="-", color='k', lw=0.5))
     plt.show()
 
 if __name__ == '__main__':
