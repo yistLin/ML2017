@@ -1,4 +1,5 @@
 #!/usr/local/bin/python3
+import os
 import argparse
 import numpy as np
 
@@ -10,9 +11,15 @@ class Dim:
         self.raw_data = np.load(data_path)
         print('raw_data loaded from {}'.format(data_path))
 
-    def load_stds(self, data_path):
-        self.stds = np.load(data_path)
-        print('stds loaded from {}'.format(data_path))
+    def load_stds(self):
+        data_path = 'stds.npy'
+        if os.path.exists(data_path):
+            self.stds = np.load(data_path)
+            print('stds loaded from {}'.format(data_path))
+        else:
+            from getdata import calc_std
+            self.stds = calc_std(return_std=True)
+            print('stds generated from getdata.py')
 
     def calc_std(self):
         self.predictions = np.empty(200)
@@ -50,6 +57,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     dim = Dim(args.data_path)
-    dim.load_stds('stds.npy')
+    dim.load_stds()
     dim.calc_std()
     dim.write_output(args.output_path)
