@@ -48,7 +48,7 @@ def plot_model(model_path):
     print('word2vec model loaded')
 
     # keep frequently appeared vocabularies
-    nb_vocab = 1000
+    nb_vocab = 500
     keep_vocabs = np.array(pick_vocabs(vocabs, nb_keep=nb_vocab))
     voc_vectors = np.array([model[voc] for voc in keep_vocabs])
     print('vocab vectors gotten')
@@ -58,18 +58,19 @@ def plot_model(model_path):
     voc_vectors_new = tsne.fit_transform(voc_vectors)
     print('vocab vectors reduced to 2-dim vectors')
 
-    xs = voc_vectors_new[:, 0] * 10.
-    ys = voc_vectors_new[:, 1] * 10.
+    xs = voc_vectors_new[:, 0] * 1000.
+    ys = voc_vectors_new[:, 1] * 1000.
 
-    rand_seq = sorted(random.sample(range(0, nb_vocab), 50))
-
-    plt.scatter(xs[rand_seq], ys[rand_seq])
+    fig = plt.figure(figsize=(20, 20))
+    ax = fig.add_subplot(1, 1, 1)
+    for idx, (x, y) in enumerate(zip(xs, ys)):
+        ax.plot(x, y, 'o', label=str(idx))
 
     texts = []
-    for x, y, voc in zip(xs[rand_seq], ys[rand_seq], keep_vocabs[rand_seq]):
-        texts.append(plt.text(x, y, voc))
+    for x, y, voc in zip(xs, ys, keep_vocabs):
+        texts.append(ax.text(x, y, voc))
     adjust_text(texts, arrowprops=dict(arrowstyle="-", color='k', lw=0.5))
-    plt.show()
+    fig.savefig('wordvec-{}.png'.format(nb_vocab))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Visualization of Word Vectors.')
