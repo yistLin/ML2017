@@ -2,6 +2,7 @@
 import os
 import argparse
 import numpy as np
+from sklearn.neighbors import NearestNeighbors
 
 class Dim:
     def __init__(self, data_path):
@@ -36,8 +37,29 @@ class Dim:
             idx_min_dist = np.argmin(dists)
             self.predictions[i] = idx_min_dist + 1
 
-            print('  ==> idx_min_dist = {}'.format(idx_min_dist))
-            print()
+            print('  ==> idx_min_dist = {}\n'.format(idx_min_dist))
+
+    def calc_nn(self):
+        import getdata
+        dists = getdata.calc_nn(return_data=True)
+        print('distances generated from getdata.py')
+        return
+
+        self.predictions = np.empty(200)
+        dists = np.empty(60)
+
+        for i in range(200):
+            std = np.std(self.raw_data[str(i)])
+            print('dataset {}, std = {}'.format(i, std))
+
+            for int_dim in range(60):
+                dists[int_dim] = np.mean(np.abs(self.stds[int_dim] - std))
+                # print('  ==> dists[{}] = {}'.format(int_dim, dists[int_dim]))
+
+            idx_min_dist = np.argmin(dists)
+            self.predictions[i] = idx_min_dist + 1
+
+            print('  ==> idx_min_dist = {}\n'.format(idx_min_dist))
 
     def write_output(self, csv_path):
         print('write predictions to output file, {}'.format(csv_path))
@@ -57,6 +79,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     dim = Dim(args.data_path)
-    dim.load_stds()
-    dim.calc_std()
-    dim.write_output(args.output_path)
+    # dim.load_stds()
+    # dim.calc_std()
+    dim.calc_nn()
+    # dim.write_output(args.output_path)
