@@ -1,9 +1,11 @@
 \documentclass[12pt,a4paper]{extarticle}
-\usepackage[margin=1in]{geometry}
+\usepackage[margin=2cm]{geometry}
 \usepackage[slantfont,boldfont]{xeCJK}
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{float}
+\usepackage{amssymb}
+\usepackage{amsmath}
 \usepackage{pgfplots}
 \usepackage{subcaption}
 
@@ -62,20 +64,6 @@
   \item[1.3] Dataset 中前 10 個人的前 10 張照片投影到 top $k$ eigenfaces 時就可以達到 < 1\% 的 reconstruction error？
   \par 答：當 $k = 59$ 時可以達到。
 
-  % \begin{figure}[ht]
-  %   \centering
-  %   \begin{tikzpicture}
-  %     \begin{axis}[
-  %       ytick={0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1},
-  %       xlabel = \# of eigenfaces,
-  %       ymajorgrids]
-  %     \addplot[color=blue] table [x=nb, y=rate, col sep=comma] {reconstruct-error.csv};
-  %     \end{axis}
-  %   \end{tikzpicture}
-  %   \caption{Reconstruction error (RMSE)}
-  %   \label{fig:eigenfaces-error-rate}
-  % \end{figure}
-
   \item[2.1] 使用 word2vec toolkit 的各個參數的值與其意義。
   \par 答：我訓練 word2vec 模型時，使用的是 default 參數，並將 vector size 設為 64。
   \begin{itemize}
@@ -83,12 +71,13 @@
     \par 有時原始的 data 中會有許多固定擺在一起的單字，如：地點、特殊名詞等，使用 word2phrase 可以將這樣的字組合起來視作一個單字。
     \item word2vec
     \begin{itemize}
-      \item size：指定 vector size，將所有 word 以這個大小的 vector 表示
-      \item window：指定 skip-gram 的最大 window 大小，亦即目標單字的左右，最多可能包含的字數
-      \item sample：在訓練時，大於某個 frequency 的單字有機會被略過，即 down-sampled
-      \item hs：指定是否使用 Hierarchical Softmax
-      \item min\_count：指定是否忽略 frequency 小於這個數值的字
-      \item alpha：即 learning rate 初始值
+      \item size：指定 vector size，將所有 word 以這個大小的 vector 表示。
+      \item window：指定 skip-grams 的 window 大小。因為在做 skip-grams 的時候，給定一個「詞窗」罩住 $w$ 這個單字而形成一個句子，而 skip-grams 就是在預測詞窗中缺漏的字 $c$，而給出機率 $p(c|w)$。因而 window 大小，就決定了模型最多會跨過多少單詞距離，給出機率 $p(c|w)$。
+      \item sample：在訓練時，大於某個 frequency 的單字有機會被略過，即 downsample。此舉在訓練模型時，可以加速訓練過程。在某些情形下，也能增加準確率。
+      \item hs：指定是否使用 Hierarchical Softmax。因為原先情況下，單純使用 softmax，輸出時要計算的參數數量很龐大。而透過訓練前先把單詞分類，建立階層式的輸出，就可以一層一層地判斷類別，大幅減少計算量。
+      \item min\_count：指定是否忽略 frequency 小於這個數值的字。
+      \item alpha：即 learning rate 初始值。
+      \item cbow：預設是使用 skip-grams，可以改為使用 CBOW。相對於 skip-grams 是給定 $w$ 預測 $c$，CBOW 則是給定 $c$ 預測當前的字 $w$，即給出 $p(w|c)$。
     \end{itemize}
   \end{itemize}
 
@@ -107,9 +96,17 @@
 
   \item[3.1] 請詳加解釋你估計原始維度的原理、合理性，這方法的通用性如何？
   \par 答：
+  \begin{enumerate}
+    \item 我利用 \texttt{gen.py} 多次生成 10000 筆 sample data，其中 $d_i \in [1, 60], h_i \in [60, 79]$，所以共有 1200 組 sample data，稱之為 $X_i, i = 1, 2, \dots, 1200$
+    \item 計算 $X_i$ 的標準差 $\hat{\sigma}_{X_i}$。通過觀察，我發現隨著 $d_i$ 增大，$\hat{\sigma}_{X_i}$ 也會隨之增加
+    \item 計算測資 $S_i, i = 1, 2, \dots, 200$ 的標準差 $\hat{\sigma}_{S_i}$
+    \item 將 $\hat{\sigma}_{S_i}$ 與 $d_i$ 相同但 $h_i$ 不同的 20 個 $\hat{\sigma}_{X_i}$ 相減，並取其平均值 $\mu_{d_i}$
+    \item 對於每個 $S_i$，另 $\tilde{d_i} = \underset{d_i}{\arg\min}\ \mu_{d_i}$
+  \end{enumerate}
+  \par 這個作法的原理及合理性，其實就是利用統計方法，觀察隨著 $d_i$ 不同時，產生出來的資料在統計上有什麼特性。透過簡單的觀察，我發現整組 sample data 的標準差會隨著 $d_i$ 增加而上升。然而，這個方法是鐵定不通用的。舉例來說：對於任意要預測 $\tilde{d_i}$ 的一組測資，若是他經過標準化後，標準差隨即變成 1，這時再用我這個方法就完全不可靠了。
 
   \item[3.2] 將你的方法做在 hand rotation sequence datatset 上得到什麼結果？合理嗎？請討論之。
-  \par 答：
+  \par 答：透過上述方法，我先將 481 張照片讀進來並攤平，將他們視做 481 個點，並計算這些點的標準差後，預測出這組 dataset 的 $\tilde{d_i} = 31$。顯然這是不合理的，因為這些資料並不是由 normal distribution 生成，再透過 neural network 轉換到高維度的，必然會有很不同的統計性質。根據推測，這組 dataset 的 $\tilde{d_i}$ 應該很接近 3，因為這些照片所呈現的，是一個三維度空間中的資訊。
 
 \end{itemize}
 
