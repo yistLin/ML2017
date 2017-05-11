@@ -14,7 +14,7 @@ def calc_std(return_std=False):
             std = np.std(data)
         
             stds[dim-1, hdim-60] = std
-            # print('[dim = {}][hdim = {}] data: std = {}'.format(dim, hdim, std))
+            print('[dim = {}][hdim = {}] data: std = {}'.format(dim, hdim, std))
 
     if return_std:
         return stds
@@ -42,4 +42,4 @@ def calc_nn(return_data=False):
         np.save('dists.npy', dists)
 
 if __name__ == '__main__':
-    calc_nn()
+    calc_std()
