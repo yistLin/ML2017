@@ -31,7 +31,7 @@ def precision(y_true, y_pred):
     return precision
 
 
-def precision(y_true, y_pred):
+def recall(y_true, y_pred):
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
     possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
     recall = true_positives / (possible_positives + K.epsilon())
@@ -52,7 +52,7 @@ def f1_score(y_true, y_pred):
     p = precision(y_true, y_pred)
     r = recall(y_true, y_pred)
     bb = 1
-    f_score = (1 + bb) * (p * r) / (bb * p + r + k.epsilon())
+    f_score = (1 + bb) * (p * r) / (bb * p + r + K.epsilon())
     return f_score
 
 
@@ -129,15 +129,15 @@ class ArtikelKlassfizier:
 
         self.model = Sequential()
         self.model.add(Embedding(self.nb_words, embedding_size, input_length=self.max_seq_len))
-        self.model.add(LSTM(128, return_sequences=True))
+        self.model.add(LSTM(128))
         self.model.add(Dense(self.nb_tags, activation='sigmoid'))
-        self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[f1_score])
 
         print(self.model.summary())
 
     def train(self):
         print('train with training data.')
-        self.model.fit(self.X_train, self.Y_train, )
+        self.model.fit(self.X_train, self.Y_train, nb_epoch=3, batch_size=32)
 
 
 if __name__ == '__main__':
