@@ -1,27 +1,12 @@
 #!/usr/local/bin/python3
-import nltk
+import pickle
 import numpy as np
 import keras.backend as K
-from keras.models import Sequential
+from utils import DataReader
+from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Activation
-from keras.layers import LSTM, Embedding
+from keras.layers import LSTM, SimpleRNN, Embedding, TimeDistributed, RepeatVector, Bidirectional
 from keras.callbacks import ModelCheckpoint, CSVLogger
-
-
-def read_data(data_path):
-    data = []
-    with open(data_path, 'r', encoding='latin1') as data_file:
-        next(data_file)
-        cnt = 0
-        for line in data_file:
-            sp_line = line.strip().split('"', 2)
-            line_id = int(sp_line[0][:-1])
-            tags = sp_line[1].split(',')
-            text_str = sp_line[2][1:].lower()
-            texts = nltk.word_tokenize(text_str)
-            
-            data.append((line_id, tags, texts))
-    return data
 
 
 def precision(y_true, y_pred):
@@ -60,14 +45,13 @@ class ArtikelKlassfizier:
     def __init__(self, max_seq_len=500):
         self.max_seq_len = max_seq_len
 
-    def fit(self, data):
+    def fit(self, tags, texts):
         """Fit the training data
 
         Parameters:
             data <numpy.array>
                 the data for model training
         """
-        lineids, tags, texts = zip(*data)
 
         # calculate number of words
         word2id = {'_PAD': 0}
@@ -129,7 +113,18 @@ class ArtikelKlassfizier:
 
         self.model = Sequential()
         self.model.add(Embedding(self.nb_words, embedding_size, input_length=self.max_seq_len))
-        self.model.add(LSTM(128))
+        # self.model.add(LSTM(64, return_sequences=True))
+        # self.model.add(LSTM(64))
+        # self.model.add(Dense(64, activation='relu'))
+        # self.model.add(RepeatVector(38))
+        # self.model.add(LSTM(64, return_sequences=True))
+        # self.model.add(TimeDistributed(Dense(1, activation='sigmoid')))
+        # self.model.compile(loss='mse', optimizer='adam', metrics=[f1_score])
+        
+        # self.model.add(LSTM(64, return_sequenes=True))
+        self.model.add(LSTM(64, return_sequences=True))
+        self.model.add(Dropout(0.4))
+        self.model.add(SimpleRNN(64))
         self.model.add(Dense(self.nb_tags, activation='sigmoid'))
         self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[f1_score])
 
@@ -137,22 +132,71 @@ class ArtikelKlassfizier:
 
     def train(self):
         print('train with training data.')
-        self.model.fit(self.X_train, self.Y_train, nb_epoch=3, batch_size=32)
+        self.model.fit(self.X_train, self.Y_train, epochs=30, batch_size=32, validation_split=0.1)
+
+    def dump(self):
+        with open('word2id.pkl', 'wb') as f:
+            pickle.dump(self.word2id, f)
+
+        with open('id2tag.pkl', 'wb') as f:
+            pickle.dump(self.id2tag, f)
+
+        self.model.save('model.hdf5')
+
+    def predict(self, data, output_path):
+        with open('word2id.pkl', 'rb') as f:
+            word2id = pickle.load(f)
+        with open('id2tag.pkl', 'rb') as f:
+            id2tag = pickle.load(f)
+        
+        X_test = []
+        for words in data:
+            ids = [word2id.get(word, 0) for word in words]
+            if len(ids) < self.max_seq_len:
+                ids = [0] * (self.max_seq_len - len(ids)) + ids
+            elif len(ids) > self.max_seq_len:
+                ids = ids[:self.max_seq_len]
+            X_test.append(ids)
+    
+        X_test = np.array(X_test)
+        predictions = self.model.predict(X_test)
+        print('predictions.shape =', predictions.shape)
+    
+        results = []
+        for dist in predictions:
+            tags = [id2tag[id[0]] for id in np.argwhere(dist > 0.5)]
+            results.append(tags)
+    
+        with open(output_path, 'w') as out_f:
+            outputs = ['id,tags\n']
+            for idx, tags in enumerate(results):
+                outputs.append('{},"{}"\n'.format(idx, ','.join(tags)))
+            out_f.write(''.join(outputs))
 
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='RNN tag predictor.')
     parser.add_argument('data_path', help='images path')
-    parser.add_argument('--plot', help='plot', action='store_true')
+    parser.add_argument('--predict', help='predict from saved model')
     args = parser.parse_args()
 
     print('Running rnn.py as main program.')
 
-    data = read_data(args.data_path)
+    reader = DataReader()
 
-    # max sequence length is 365
-    ak = ArtikelKlassfizier(max_seq_len=400)
-    ak.fit(data)
-    ak.build_model(embedding_size=64)
-    ak.train()
+    if not args.predict:
+        _, tags, texts = reader.read_data(args.data_path)
+        print(texts)
+        exit()
+        ak = ArtikelKlassfizier(max_seq_len=400)
+        ak.fit(tags, texts)
+        ak.build_model(embedding_size=128)
+        ak.train()
+        ak.dump()
+    else:
+        _, texts = reader.read_test_data(args.data_path)
+        ak = ArtikelKlassfizier(max_seq_len=400)
+        ak.model = load_model(args.predict, custom_objects={'f1_score': f1_score})
+        ak.predict(texts, 'rnn-output.csv')
+
