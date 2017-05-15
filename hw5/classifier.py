@@ -2,13 +2,12 @@
 import nltk
 import pickle
 import numpy as np
-import keras.backend as K
-from utils import read_data, read_test_data
+from utils import DataReader
 from gensim.models import Doc2Vec
 from gensim.models.doc2vec import LabeledSentence
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation
-from rnn import precision, recall, f1_score
+# import keras.backend as K
+# from keras.models import Sequential
+# from keras.layers import Dense, Dropout, Activation
 
 
 class LabeledLineSentence():
@@ -28,7 +27,11 @@ def train_doc2vec(texts, testtexts):
 
     print('model.corpus_count =', model.corpus_count)
     print('model.iter =', model.iter)
-    model.train(it, total_examples=model.corpus_count, epochs=10)
+
+    for _ in range(10):
+        train_list = list(it)
+        np.random.shuffle(train_list)
+        model.train(train_list, total_examples=model.corpus_count, epochs=1)
 
     model.save('doc2vec.model')
 
@@ -47,21 +50,22 @@ def train_clf_doc2vec(tags, texts):
     print('tag_vec.shape =', tag_vec.shape)
     print('mlb.classes_ =', list(mlb.classes_))
 
-    X_train = text_vec
-    Y_train = tag_vec
-    # X_train, X_valid = text_vec[:-400], text_vec[-400:]
-    # Y_train, Y_valid = tag_vec[:-400], tag_vec[-400:]
+    # X_train = text_vec
+    # Y_train = tag_vec
+    X_train, X_valid = text_vec[:-400], text_vec[-400:]
+    Y_train, Y_valid = tag_vec[:-400], tag_vec[-400:]
     # X_train, X_valid = text_vec[400:], text_vec[:400]
     # Y_train, Y_valid = tag_vec[400:], tag_vec[:400]
 
-    # clf = OneVsRestClassifier(LinearSVC(class_weight='balanced'), n_jobs=-1)
-    clf = OneVsRestClassifier(SVC(kernel='rbf', C=100, class_weight='balanced'), n_jobs=-1)
+    clf = OneVsRestClassifier(LinearSVC(C=100, class_weight='balanced'), n_jobs=-1)
+    # clf = OneVsRestClassifier(SVC(kernel='rbf', C=100, class_weight='balanced'), n_jobs=-1)
     clf.fit(X_train, Y_train)
+    print('clf.fit() done')
 
     train_pred = clf.predict(X_train)
-    # valid_pred = clf.predict(X_valid)
-    # print('train_pred =', train_pred)
-    # print('valid_pred =', valid_pred)
+    valid_pred = clf.predict(X_valid)
+    print('train_pred =', train_pred)
+    print('valid_pred =', valid_pred)
 
     with open('mlb.pkl', 'wb') as f:
         pickle.dump(mlb, f)
@@ -70,7 +74,7 @@ def train_clf_doc2vec(tags, texts):
 
     from sklearn.metrics import f1_score
     print('[train] f1_score =', f1_score(Y_train, train_pred, average='micro'))
-    # print('[valid] f1_score =', f1_score(Y_valid, valid_pred, average='micro'))
+    print('[valid] f1_score =', f1_score(Y_valid, valid_pred, average='micro'))
 
     # X_train = text_vec
     # Y_train = tag_vec
@@ -97,9 +101,9 @@ def predict(sentences, output_path):
     results = mlb.inverse_transform(predictions)
 
     with open(output_path, 'w') as out_f:
-        outputs = ['id,tags\n']
+        outputs = ['"id","tags"\n']
         for idx, tags in enumerate(results):
-            outputs.append('{},"{}"\n'.format(idx, ','.join(tags)))
+            outputs.append('"{}","{}"\n'.format(idx, ' '.join(tags)))
         out_f.write(''.join(outputs))
 
 
@@ -112,15 +116,16 @@ if __name__ == '__main__':
     parser.add_argument('--clf_doc2vec', action='store_true')
     args = parser.parse_args()
 
-    # max sequence length is 365
+    reader = DataReader()
+
     if args.predict:
-        _, texts = read_test_data(args.data_path)
+        _, texts = reader.read_test_data(args.data_path)
         predict(texts, 'output.csv')
     elif args.doc2vec:
-        _, tags, texts = read_data(args.data_path)
-        _, testtexts = read_test_data('test_data.csv')
+        _, tags, texts = reader.read_data(args.data_path)
+        _, testtexts = reader.read_test_data('test_data.csv')
         train_doc2vec(texts, testtexts)
     elif args.clf_doc2vec:
-        _, tags, texts = read_data(args.data_path)
+        _, tags, texts = reader.read_data(args.data_path)
         train_clf_doc2vec(tags, texts)
 
