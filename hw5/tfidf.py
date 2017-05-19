@@ -1,85 +1,59 @@
 #!/usr/local/bin/python3
-import nltk
 import pickle
 import numpy as np
 from utils import DataReader
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.svm import SVC, LinearSVC
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import f1_score
+from sklearn.model_selection import cross_val_score
 
 
-def train_tfidf(tokens_list):
-    sentences = [' '.join(tokens) for tokens in tokens_list]
-    count_vect = CountVectorizer().fit(sentences)
-    X_train_counts = count_vect.transform(sentences)
-    tfidf_transformer = TfidfTransformer().fit(X_train_counts)
-    data_vec = tfidf_transformer.transform(X_train_counts)
-    print('data_vec.shape =', data_vec.shape)
+class Classifier:
+    def __init__(self):
+        pass
 
-    with open('counter.pkl', 'wb') as f:
-        pickle.dump(count_vect, f)
-    with open('transformer.pkl', 'wb') as f:
-        pickle.dump(tfidf_transformer, f)
+    def train_tfidf(self, sentences):
+        # self.vectorizer = TfidfVectorizer(stop_words='english', binary=True, use_idf=True)
+        self.vectorizer = TfidfVectorizer(stop_words='english')
+        self.vectorizer.fit(sentences)
 
-    return data_vec
+    def train_svm(self, sentences, tags, model_path, nb_cv=0):
+        self.data_vec = self.vectorizer.transform(sentences)
+        self.binarizer = MultiLabelBinarizer()
+        self.tag_vec = self.binarizer.fit_transform(tags)
+        print('data_vec.shape =', self.data_vec.shape)
+        print('tag_vec.shape =', self.tag_vec.shape)
+        print('mlb.classes_ =', list(self.binarizer.classes_))
 
+        X_train = self.data_vec
+        Y_train = self.tag_vec
 
-def train_svm(data_vec, tags, model_path='tfidf-model.pkl'):
-    from sklearn.preprocessing import MultiLabelBinarizer
-    from sklearn.multiclass import OneVsRestClassifier
-    from sklearn.svm import SVC, LinearSVC
-    from sklearn.metrics import f1_score
+        # est = MultinomialNB(alpha=0.04)
+        est = LinearSVC(C=0.01, class_weight='balanced')
+        self.clf = OneVsRestClassifier(est, n_jobs=-1)
+        
+        if nb_cv > 0:
+            scores = cross_val_score(self.clf, X_train, Y_train, scoring='f1_micro', cv=nb_cv, n_jobs=-1)
+            print('[CV] scores =', scores)
+            print('[CV]   mean =', scores.mean())
+            print('[CV]    std =', scores.std())
 
-    mlb = MultiLabelBinarizer()
-    tag_vec = mlb.fit_transform(tags)
-    print('tag_vec.shape =', tag_vec.shape)
-    print('mlb.classes_ =', list(mlb.classes_))
+        self.clf.fit(X_train, Y_train)
 
-    X_train = data_vec
-    Y_train = tag_vec
-    # X_train, X_valid = data_vec[:-400], data_vec[-400:]
-    # Y_train, Y_valid = tag_vec[:-400], tag_vec[-400:]
-    # X_train, X_valid = data_vec[400:], data_vec[:400]
-    # Y_train, Y_valid = tag_vec[400:], tag_vec[:400]
-
-    clf = OneVsRestClassifier(LinearSVC(C=0.001, class_weight='balanced'), n_jobs=-1)
-    # clf = OneVsRestClassifier(SVC(kernel='rbf', C=1, class_weight='balanced'), n_jobs=1)
-    clf.fit(X_train, Y_train)
-    print('clf.fit() done')
-
-    train_pred = clf.predict(X_train)
-    print('[train] f1_score =', f1_score(Y_train, train_pred, average='micro'))
-    # valid_pred = clf.predict(X_valid)
-    # print('[valid] f1_score =', f1_score(Y_valid, valid_pred, average='micro'))
-
-    with open('mlb.pkl', 'wb') as f:
-        pickle.dump(mlb, f)
-    with open(model_path, 'wb') as f:
-        pickle.dump(clf, f)
-
-
-def predict(tokens_list, output_path, model_path='tfidf-model.pkl'):
-    with open('counter.pkl', 'rb') as f:
-        counter = pickle.load(f)
-    with open('transformer.pkl', 'rb') as f:
-        transformer = pickle.load(f)
-    with open('mlb.pkl', 'rb') as f:
-        mlb = pickle.load(f)
-    with open(model_path, 'rb') as f:
-        svm_model = pickle.load(f)
-
-    sentences = [' '.join(tokens) for tokens in tokens_list]
-
-    count_vec = counter.transform(sentences)
-    test_vec = transformer.transform(count_vec)
-    predictions = svm_model.predict(test_vec)
-    results = mlb.inverse_transform(predictions)
-
-    with open(output_path, 'w') as out_f:
-        outputs = ['"id","tags"\n']
-        for idx, tags in enumerate(results):
-            outputs.append('"{}","{}"\n'.format(idx, ' '.join(tags)))
-        out_f.write(''.join(outputs))
+    def predict(self, sentences, output_path):
+        test_vec = self.vectorizer.transform(sentences)
+        predictions = self.clf.predict(test_vec)
+        results = self.binarizer.inverse_transform(predictions)
+    
+        with open(output_path, 'w') as out_f:
+            outputs = ['"id","tags"\n']
+            for idx, tags in enumerate(results):
+                alltags = 'FICTION NOVEL FANTASY' if len(tags) == 0 else ' '.join(tags)
+                outputs.append('"{}","{}"\n'.format(idx, alltags))
+            out_f.write(''.join(outputs))
 
 
 if __name__ == '__main__':
@@ -87,19 +61,26 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TFIDF')
     parser.add_argument('--train', help='predict')
     parser.add_argument('--predict', help='doc2vec')
-    parser.add_argument('--model')
+    parser.add_argument('--model', default='tfidf-model.pkl')
+    parser.add_argument('--cv', type=int, default=0)
     args = parser.parse_args()
 
     reader = DataReader()
+    model_path = args.model
 
     if args.train:
         _, tags, texts = reader.read_data(args.train)
-        data_vec = train_tfidf(texts)
-        model_path = args.model or 'tfidf-model.pkl'
-        train_svm(data_vec, tags, model_path=model_path)
+
+        clf = Classifier()
+        clf.train_tfidf(texts)
+        clf.train_svm(texts, tags, model_path, nb_cv=args.cv)
+
+        with open(model_path, 'wb') as model_f:
+            pickle.dump(clf, model_f)
 
     if args.predict:
         _, texts = reader.read_test_data(args.predict)
-        model_path = args.model or 'tfidf-model.pkl'
-        predict(texts, 'output.csv', model_path=model_path)
+        with open(model_path, 'rb') as model_f:
+            clf = pickle.load(model_f)
+        clf.predict(texts, 'output.csv')
 
