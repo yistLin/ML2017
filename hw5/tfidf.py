@@ -2,11 +2,10 @@
 import pickle
 import numpy as np
 from utils import DataReader
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC, LinearSVC
-from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
 
@@ -16,37 +15,41 @@ class Classifier:
         pass
 
     def train_tfidf(self, sentences):
-        # self.vectorizer = TfidfVectorizer(stop_words='english', binary=True, use_idf=True)
-        self.vectorizer = TfidfVectorizer(stop_words='english')
+        self.vectorizer = TfidfVectorizer(stop_words='english', ngram_range=(1, 2), max_features=60000, sublinear_tf=True)
+        # self.vectorizer = TfidfVectorizer(stop_words='english', max_features=40000)
         self.vectorizer.fit(sentences)
 
     def train_svm(self, sentences, tags, model_path, nb_cv=0):
-        self.data_vec = self.vectorizer.transform(sentences)
+        X_train = self.vectorizer.transform(sentences)
         self.binarizer = MultiLabelBinarizer()
-        self.tag_vec = self.binarizer.fit_transform(tags)
-        print('data_vec.shape =', self.data_vec.shape)
-        print('tag_vec.shape =', self.tag_vec.shape)
-        print('mlb.classes_ =', list(self.binarizer.classes_))
+        Y_train = self.binarizer.fit_transform(tags)
+        print('data_vec.shape =', X_train.shape)
+        print('tag_vec.shape =', Y_train.shape)
 
-        X_train = self.data_vec
-        Y_train = self.tag_vec
+        # X_train, X_valid = X_train[400:], X_train[:400]
+        # Y_train, Y_valid = Y_train[400:], Y_train[:400]
+        # X_train, X_valid = X_train[:-400], X_train[-400:]
+        # Y_train, Y_valid = Y_train[:-400], Y_train[-400:]
 
-        # est = MultinomialNB(alpha=0.04)
-        est = LinearSVC(C=0.01, class_weight='balanced')
-        self.clf = OneVsRestClassifier(est, n_jobs=-1)
-        
+        est = LinearSVC(C=0.0005, class_weight='balanced')
+        self.clf = OneVsRestClassifier(est, n_jobs=1)
+
         if nb_cv > 0:
-            scores = cross_val_score(self.clf, X_train, Y_train, scoring='f1_micro', cv=nb_cv, n_jobs=-1)
+            scores = cross_val_score(self.clf, X_train, Y_train, scoring='f1_samples', cv=nb_cv, n_jobs=-1)
             print('[CV] scores =', scores)
             print('[CV]   mean =', scores.mean())
             print('[CV]    std =', scores.std())
 
         self.clf.fit(X_train, Y_train)
 
+        # predict and calculate f1_score
+        # predictions = self.clf.predict(X_valid)
+        # print('[PRED] f1_score (tfidf) =', f1_score(Y_valid, predictions, average='samples'))
+
     def predict(self, sentences, output_path):
         test_vec = self.vectorizer.transform(sentences)
-        predictions = self.clf.predict(test_vec)
-        results = self.binarizer.inverse_transform(predictions)
+        preds = self.clf.predict(test_vec)
+        results = self.binarizer.inverse_transform(preds)
     
         with open(output_path, 'w') as out_f:
             outputs = ['"id","tags"\n']
