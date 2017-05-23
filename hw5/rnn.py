@@ -8,7 +8,7 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Activation
 from keras.layers import LSTM, SimpleRNN, GRU, Embedding
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 from sklearn.preprocessing import MultiLabelBinarizer
 from keras.callbacks import ModelCheckpoint
 
@@ -72,21 +72,24 @@ class ArtikelKlassfizier:
                 weights=[self.embedding_matrix],
                 input_length=self.max_seq_len,
                 trainable=False))
-        model.add(GRU(128, activation='tanh', dropout=0.2, return_sequences=True))
-        model.add(GRU(128, activation='tanh', dropout=0.2))
+        # model.add(GRU(128, activation='tanh', dropout=0.2, return_sequences=True))
+        model.add(GRU(128, activation='tanh', dropout=0.3, return_sequences=True))
+        model.add(GRU(256, dropout=0.3))
+        model.add(Dense(512, activation='relu'))
+        model.add(Dropout(0.4))
         model.add(Dense(256, activation='relu'))
-        model.add(Dropout(0.4))
+        model.add(Dropout(0.3))
         model.add(Dense(128, activation='relu'))
-        model.add(Dropout(0.4))
+        model.add(Dropout(0.3))
         model.add(Dense(self.nb_tags, activation='sigmoid'))
 
         adam = Adam(lr=0.001, decay=1e-6, clipvalue=0.5)
-        model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=[f1_score])
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=[f1_score])
 
         ckpt = ModelCheckpoint('rnn-model.hdf5', monitor='val_f1_score', save_best_only=True, mode='max')
 
         model.summary()
-        model.fit(X_train, Y_train, epochs=1, batch_size=128,
+        model.fit(X_train, Y_train, epochs=5000, batch_size=128,
                 validation_data=(X_valid, Y_valid),
                 callbacks=[ckpt])
 
@@ -94,7 +97,7 @@ class ArtikelKlassfizier:
 
     def predict(self, sentences, model, output_path):
         X_test = self.tokenizer.texts_to_sequences(sentences)
-        X_test = pad_sequences(X_test, maxlen=317)
+        X_test = pad_sequences(X_test, maxlen=306)
         predictions = model.predict(X_test)
         print('predictions.shape =', predictions.shape)
 

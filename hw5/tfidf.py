@@ -2,7 +2,7 @@
 import pickle
 import numpy as np
 from utils import DataReader
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer, TfidfTransformer
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC, LinearSVC
@@ -15,11 +15,17 @@ class Classifier:
         pass
 
     def train_tfidf(self, sentences):
-        self.vectorizer = TfidfVectorizer(stop_words='english', ngram_range=(1, 2), max_features=60000, sublinear_tf=True)
-        # self.vectorizer = TfidfVectorizer(stop_words='english', max_features=40000)
+        self.vectorizer = TfidfVectorizer(stop_words='english', ngram_range=(1, 3), max_features=20000, sublinear_tf=True)
         self.vectorizer.fit(sentences)
 
+        # self.counter = CountVectorizer(stop_words='english', ngram_range=(1, 3), max_features=40000)
+        # self.transformer = TfidfTransformer(sublinear_tf=True)
+        # count_vec = self.counter.fit_transform(sentences)
+        # self.transformer.fit(count_vec)
+
     def train_svm(self, sentences, tags, model_path, nb_cv=0):
+        # X_temp = self.counter.transform(sentences)
+        # X_train = self.transformer.transform(X_temp)
         X_train = self.vectorizer.transform(sentences)
         self.binarizer = MultiLabelBinarizer()
         Y_train = self.binarizer.fit_transform(tags)
@@ -48,13 +54,15 @@ class Classifier:
 
     def predict(self, sentences, output_path):
         test_vec = self.vectorizer.transform(sentences)
+        # temp_vec = self.counter.transform(sentences)
+        # test_vec = self.transformer.transform(temp_vec)
         preds = self.clf.predict(test_vec)
         results = self.binarizer.inverse_transform(preds)
     
         with open(output_path, 'w') as out_f:
             outputs = ['"id","tags"\n']
             for idx, tags in enumerate(results):
-                alltags = 'FICTION NOVEL FANTASY' if len(tags) == 0 else ' '.join(tags)
+                alltags = 'FICTION NOVEL' if len(tags) == 0 else ' '.join(tags)
                 outputs.append('"{}","{}"\n'.format(idx, alltags))
             out_f.write(''.join(outputs))
 
@@ -66,6 +74,7 @@ if __name__ == '__main__':
     parser.add_argument('--predict', help='doc2vec')
     parser.add_argument('--model', default='tfidf-model.pkl')
     parser.add_argument('--cv', type=int, default=0)
+    parser.add_argument('--output', default='output.csv')
     args = parser.parse_args()
 
     reader = DataReader()
@@ -85,5 +94,5 @@ if __name__ == '__main__':
         _, texts = reader.read_test_data(args.predict)
         with open(model_path, 'rb') as model_f:
             clf = pickle.load(model_f)
-        clf.predict(texts, 'output.csv')
+        clf.predict(texts, args.output)
 
