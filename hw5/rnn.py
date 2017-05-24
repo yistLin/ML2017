@@ -58,7 +58,7 @@ class ArtikelKlassfizier:
 
         # shuffle and split training data
         indices = np.arange(X.shape[0])
-        np.random.seed(5)
+        np.random.seed(9)
         np.random.shuffle(indices)
         X_data = X[indices]
         Y_data = Y[indices]
@@ -73,11 +73,11 @@ class ArtikelKlassfizier:
                 input_length=self.max_seq_len,
                 trainable=False))
         model.add(GRU(128, activation='tanh', dropout=0.3, return_sequences=True))
-        model.add(GRU(256, dropout=0.3))
+        model.add(GRU(128, dropout=0.3))
         model.add(Dense(512, activation='relu'))
         model.add(Dropout(0.4))
         model.add(Dense(256, activation='relu'))
-        model.add(Dropout(0.3))
+        model.add(Dropout(0.4))
         model.add(Dense(128, activation='relu'))
         model.add(Dropout(0.3))
         model.add(Dense(self.nb_tags, activation='sigmoid'))
@@ -91,18 +91,23 @@ class ArtikelKlassfizier:
         model.summary()
         model.fit(X_train, Y_train, epochs=5000, batch_size=128,
                 validation_data=(X_valid, Y_valid),
-                callbacks=[ckpt, csv_logger])
+                callbacks=[ckpt])
 
         model.save(model_path)
 
-    def predict(self, sentences, model, output_path):
+    def predict(self, sentences, model, output_path, threshold=0.4):
         X_test = self.tokenizer.texts_to_sequences(sentences)
         X_test = pad_sequences(X_test, maxlen=320)
         predictions = model.predict(X_test)
         print('predictions.shape =', predictions.shape)
 
-        results = self.binarizer.inverse_transform(np.round(predictions))
+        print('prediction with threshold = {}'.format(threshold))
+        predictions[predictions < threshold] = 0
+        predictions[predictions >= threshold] = 1
 
+        results = self.binarizer.inverse_transform(predictions)
+
+        print('predict without filling "NOVEL FICTION" into blank prediction')
         with open(output_path, 'w') as out_f:
             outputs = ['"id","tags"\n']
             for idx, tags in enumerate(results):
@@ -120,6 +125,7 @@ if __name__ == '__main__':
     parser.add_argument('--class_path', default='rnn-classifier.pkl')
     parser.add_argument('--model_path', default='rnn-model.hdf5')
     parser.add_argument('--output_path', default='rnn-output.csv')
+    parser.add_argument('--threshold', type=float, default=0.4)
     parser.add_argument('--fit', action='store_true')
     parser.add_argument('--train', action='store_true')
     parser.add_argument('--predict', action='store_true')
@@ -152,4 +158,4 @@ if __name__ == '__main__':
         with open(args.class_path, 'rb') as class_f:
             ak = pickle.load(class_f)
         model = load_model(args.model_path, custom_objects={'f1_score': f1_score})
-        ak.predict(list(texts), model, output_path)
+        ak.predict(list(texts), model, output_path, threshold=args.threshold)
