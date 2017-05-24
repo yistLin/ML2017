@@ -10,7 +10,7 @@ from keras.layers import Dense, Dropout, Activation
 from keras.layers import LSTM, SimpleRNN, GRU, Embedding
 from keras.optimizers import Adam, SGD
 from sklearn.preprocessing import MultiLabelBinarizer
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, CSVLogger
 
 
 class ArtikelKlassfizier:
@@ -18,7 +18,7 @@ class ArtikelKlassfizier:
         self.tokenizer = None
         self.binarizer = None
         self.embedding_dim = 100
-        self.max_seq_len = 300
+        self.max_seq_len = 320
 
     def get_embedding_dict(self, path):
         embedding_dict = {}
@@ -50,7 +50,7 @@ class ArtikelKlassfizier:
     def train(self, X, Y, model_path):
         X = self.tokenizer.texts_to_sequences(X)
         Y = self.binarizer.transform(Y)
-        X = pad_sequences(X)
+        X = pad_sequences(X, maxlen=320)
         self.max_seq_len = X.shape[1]
 
         print('# of training data =', X.shape[0])
@@ -72,7 +72,6 @@ class ArtikelKlassfizier:
                 weights=[self.embedding_matrix],
                 input_length=self.max_seq_len,
                 trainable=False))
-        # model.add(GRU(128, activation='tanh', dropout=0.2, return_sequences=True))
         model.add(GRU(128, activation='tanh', dropout=0.3, return_sequences=True))
         model.add(GRU(256, dropout=0.3))
         model.add(Dense(512, activation='relu'))
@@ -86,18 +85,19 @@ class ArtikelKlassfizier:
         adam = Adam(lr=0.001, decay=1e-6, clipvalue=0.5)
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=[f1_score])
 
-        ckpt = ModelCheckpoint('rnn-model.hdf5', monitor='val_f1_score', save_best_only=True, mode='max')
+        ckpt = ModelCheckpoint('rnn-model.hdf5', monitor='val_f1_score', save_best_only=True, mode='max', verbose=1)
+        csv_logger = CSVLogger('rnn-sigmoid-training.log', separator=',', append=False)
 
         model.summary()
         model.fit(X_train, Y_train, epochs=5000, batch_size=128,
                 validation_data=(X_valid, Y_valid),
-                callbacks=[ckpt])
+                callbacks=[ckpt, csv_logger])
 
         model.save(model_path)
 
     def predict(self, sentences, model, output_path):
         X_test = self.tokenizer.texts_to_sequences(sentences)
-        X_test = pad_sequences(X_test, maxlen=306)
+        X_test = pad_sequences(X_test, maxlen=320)
         predictions = model.predict(X_test)
         print('predictions.shape =', predictions.shape)
 
@@ -106,7 +106,7 @@ class ArtikelKlassfizier:
         with open(output_path, 'w') as out_f:
             outputs = ['"id","tags"\n']
             for idx, tags in enumerate(results):
-                all_tags = ' '.join(tags) if len(tags) > 0 else 'FICTION NOVEL'
+                all_tags = ' '.join(tags)
                 outputs.append('"{}","{}"\n'.format(idx, all_tags))
             out_f.write(''.join(outputs))
 
@@ -119,6 +119,7 @@ if __name__ == '__main__':
     parser.add_argument('--wordvec', help='glove word2vec path')
     parser.add_argument('--class_path', default='rnn-classifier.pkl')
     parser.add_argument('--model_path', default='rnn-model.hdf5')
+    parser.add_argument('--output_path', default='rnn-output.csv')
     parser.add_argument('--fit', action='store_true')
     parser.add_argument('--train', action='store_true')
     parser.add_argument('--predict', action='store_true')
@@ -129,6 +130,7 @@ if __name__ == '__main__':
     reader = DataReader()
     model_path = args.model_path
     class_path = args.class_path
+    output_path = args.output_path
 
     if args.fit:
         _, tags, train_sentences = reader.read_data(args.train_data)
@@ -150,4 +152,4 @@ if __name__ == '__main__':
         with open(args.class_path, 'rb') as class_f:
             ak = pickle.load(class_f)
         model = load_model(args.model_path, custom_objects={'f1_score': f1_score})
-        ak.predict(list(texts), model, 'rnn-output.csv')
+        ak.predict(list(texts), model, output_path)
