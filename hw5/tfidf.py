@@ -2,40 +2,27 @@
 import pickle
 import numpy as np
 from utils import DataReader
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer, TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.svm import SVC, LinearSVC
+from sklearn.svm import LinearSVC
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
 
 
 class Classifier:
     def __init__(self):
-        pass
+        self.vectorizer = TfidfVectorizer(stop_words='english', ngram_range=(1, 3), max_features=20000, sublinear_tf=True)
+        self.binarizer = MultiLabelBinarizer()
 
     def train_tfidf(self, sentences):
-        self.vectorizer = TfidfVectorizer(stop_words='english', ngram_range=(1, 3), max_features=20000, sublinear_tf=True)
         self.vectorizer.fit(sentences)
 
-        # self.counter = CountVectorizer(stop_words='english', ngram_range=(1, 3), max_features=40000)
-        # self.transformer = TfidfTransformer(sublinear_tf=True)
-        # count_vec = self.counter.fit_transform(sentences)
-        # self.transformer.fit(count_vec)
-
     def train_svm(self, sentences, tags, model_path, nb_cv=0):
-        # X_temp = self.counter.transform(sentences)
-        # X_train = self.transformer.transform(X_temp)
         X_train = self.vectorizer.transform(sentences)
-        self.binarizer = MultiLabelBinarizer()
         Y_train = self.binarizer.fit_transform(tags)
         print('data_vec.shape =', X_train.shape)
         print('tag_vec.shape =', Y_train.shape)
-
-        # X_train, X_valid = X_train[400:], X_train[:400]
-        # Y_train, Y_valid = Y_train[400:], Y_train[:400]
-        # X_train, X_valid = X_train[:-400], X_train[-400:]
-        # Y_train, Y_valid = Y_train[:-400], Y_train[-400:]
 
         est = LinearSVC(C=0.0005, class_weight='balanced')
         self.clf = OneVsRestClassifier(est, n_jobs=1)
@@ -48,21 +35,15 @@ class Classifier:
 
         self.clf.fit(X_train, Y_train)
 
-        # predict and calculate f1_score
-        # predictions = self.clf.predict(X_valid)
-        # print('[PRED] f1_score (tfidf) =', f1_score(Y_valid, predictions, average='samples'))
-
     def predict(self, sentences, output_path):
         test_vec = self.vectorizer.transform(sentences)
-        # temp_vec = self.counter.transform(sentences)
-        # test_vec = self.transformer.transform(temp_vec)
         preds = self.clf.predict(test_vec)
         results = self.binarizer.inverse_transform(preds)
     
         with open(output_path, 'w') as out_f:
             outputs = ['"id","tags"\n']
             for idx, tags in enumerate(results):
-                alltags = 'FICTION NOVEL' if len(tags) == 0 else ' '.join(tags)
+                alltags = ' '.join(tags)
                 outputs.append('"{}","{}"\n'.format(idx, alltags))
             out_f.write(''.join(outputs))
 
