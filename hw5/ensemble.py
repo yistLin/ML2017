@@ -5,8 +5,9 @@ import numpy as np
 
 nb_voters = 0
 vote_dics = [{} for i in range(1234)]
+output_path = sys.argv[-1]
 
-for file_path in sys.argv[1:]:
+for file_path in sys.argv[1:-1]:
     print('load outputs from:', file_path)
     nb_voters += 1
     with open(file_path) as csvfile:
@@ -40,7 +41,7 @@ for line_id, dic in enumerate(vote_dics):
         
     predictions.append(tags)
 
-with open('output.csv', 'w') as out_f:
+with open(output_path, 'w') as out_f:
     outputs = ['"id","tags"\n']
     for idx, tags in enumerate(predictions):
         all_tags = ' '.join(tags)
