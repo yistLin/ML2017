@@ -52,3 +52,5 @@ python3 tfidf.py \
 
 python3 ensemble.py $OUT1 $OUT2 $OUT3 $OUT4 $OUT5 $OUTPUT_PATH
 
+rm -f $OUT1 $OUT2 $OUT3 $OUT4 $OUT5
+
