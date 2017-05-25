@@ -1,15 +1,9 @@
 import pickle
-from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import word_tokenize
 import keras.backend as K
 
 class DataReader():
     def __init__(self):
-        self.lemmatizer = WordNetLemmatizer()
-
-    def lemmatize(self, texts):
-        tokens = word_tokenize(texts)
-        return ' '.join([self.lemmatizer.lemmatize(token) for token in tokens])
+        pass
 
     def read_data(self, data_path):
         data = []
@@ -20,7 +14,6 @@ class DataReader():
                 line_id = int(sp_line[0][:-1])
                 tags = sp_line[1].split()
                 text_str = sp_line[2][1:].lower()
-                # text_str = self.lemmatize(text_str)
                 data.append((line_id, tags, text_str))
         return zip(*data)
  
@@ -32,7 +25,6 @@ class DataReader():
                 sp_line = line.strip().split(',', 1)
                 line_id = int(sp_line[0])
                 text_str = sp_line[1].lower()
-                # text_str = self.lemmatize(text_str)
                 data.append((line_id, text_str))
         return zip(*data)
 
