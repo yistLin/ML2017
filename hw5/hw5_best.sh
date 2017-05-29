@@ -40,13 +40,13 @@ python3 rnn.py \
 
 echo "[PREDICT] generate $OUT4 from pre-trained model."
 python3 tfidf.py \
-    --predict data/test_data.csv \
+    --predict $TEST_DATA_PATH \
     --model models/tfidf-model_1.pkl \
     --output $OUT4
 
 echo "[PREDICT] generate $OUT5 from pre-trained model."
 python3 tfidf.py \
-    --predict data/test_data.csv \
+    --predict $TEST_DATA_PATH \
     --model models/tfidf-model_2.pkl \
     --output $OUT5
 
