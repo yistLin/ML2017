@@ -1,9 +1,11 @@
 import numpy as np
 from utils import read_data, write_output
-from keras.models import Sequential, load_model
+from keras.models import Sequential
 from keras.layers import Embedding, Reshape, Merge, Dropout, Dense
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras import regularizers
 
+nb_factors = 128
 
 class MF_Model(Sequential):
     def __init__(self, nb_users, nb_items, k_factors, **kwargs):
@@ -18,7 +20,12 @@ class MF_Model(Sequential):
         super(MF_Model, self).__init__(**kwargs)
         self.add(Merge([P, Q], mode='concat'))
         self.add(Dropout(0.3))
-        self.add(Dense(k_factors, activation='relu'))
+        self.add(Dense(k_factors,
+            activation='relu',
+            use_bias=True,
+            bias_initializer='zeros',
+            kernel_regularizer=regularizers.l1(0.01)
+            ))
         self.add(Dropout(0.3))
         self.add(Dense(1, activation='linear'))
 
@@ -39,7 +46,7 @@ def train(train_data_path, model_path):
     rate_train, rate_valid = train_data[valid_split:, 3], train_data[:valid_split, 3]
     print('# of validation data =', valid_split)
 
-    mf_model = MF_Model(max_userid, max_movieid, 256)
+    mf_model = MF_Model(max_userid, max_movieid, nb_factors)
     mf_model.compile(loss='mse', optimizer='adam')
     early_stop = EarlyStopping('val_loss', patience=3)
     ckpt = ModelCheckpoint(model_path,
@@ -58,7 +65,7 @@ def train(train_data_path, model_path):
 
 def predict(test_data_path, model_path, output_path):
     test_data = read_data(test_data_path)
-    mf_model = MF_Model(6040, 3952, 256)
+    mf_model = MF_Model(6040, 3952, nb_factors)
     mf_model.load_weights(model_path)
 
     user_test = test_data[:, 1]
