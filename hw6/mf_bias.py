@@ -5,7 +5,7 @@ from keras.models import Model, load_model
 from keras.layers import Input, Embedding, Reshape, Dropout, Dense
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
-nb_factors = 8
+nb_factors = 16
 
 def build_model(nb_users, nb_items, k_factors):
     user_input = Input(shape=(1,))
@@ -16,8 +16,15 @@ def build_model(nb_users, nb_items, k_factors):
     Q = Embedding(input_dim=nb_items, output_dim=k_factors, input_length=1)(item_input)
     item_emb_output = Reshape((k_factors,))(Q)
 
+    R = Embedding(input_dim=nb_users, output_dim=1, input_length=1)(user_input)
+    user_bias = Reshape((1,))(R)
+
+    S = Embedding(input_dim=nb_items, output_dim=1, input_length=1)(item_input)
+    item_bias = Reshape((1,))(S)
+
     mf_output = keras.layers.dot([user_emb_output, item_emb_output], axes=-1)
-    return Model(inputs=[user_input, item_input], outputs=[mf_output])
+    mf_output_bias = keras.layers.add([mf_output, user_bias, item_bias])
+    return Model(inputs=[user_input, item_input], outputs=[mf_output_bias])
 
 
 def train(train_data_path, model_path):
@@ -40,9 +47,14 @@ def train(train_data_path, model_path):
     print('item_train.shape =', item_train.shape)
     print('rate_train.shape =', rate_train.shape)
 
+    rate_mean = 3.581712
+    rate_std = 1.116897
+    rate_train = (rate_train - rate_mean) / rate_std
+    rate_valid = (rate_valid - rate_mean) / rate_std
+
     mf_model = build_model(max_userid, max_movieid, nb_factors)
     mf_model.compile(loss='mse', optimizer='adam')
-    early_stop = EarlyStopping('val_loss', patience=2)
+    early_stop = EarlyStopping('val_loss', patience=3)
     ckpt = ModelCheckpoint(model_path,
         monitor='val_loss',
         save_best_only=True,
@@ -51,7 +63,7 @@ def train(train_data_path, model_path):
         [user_train, item_train],
         rate_train,
         epochs=100,
-        batch_size=128,
+        batch_size=256,
         validation_data=([user_valid, item_valid], rate_valid),
         verbose=1,
         callbacks=[ckpt, early_stop])
@@ -64,6 +76,7 @@ def predict(test_data_path, model_path, output_path):
     user_test = test_data[:, 1]
     item_test = test_data[:, 2]
     predictions = mf_model.predict([user_test, item_test]).squeeze()
+    predictions = predictions * 1.116897 + 3.581712
     print(predictions.shape)
     print(predictions)
 
