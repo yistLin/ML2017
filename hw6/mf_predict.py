@@ -12,7 +12,7 @@ def predict(test_data_path, model_path, output_path):
     item_test = test_data[:, 2]
     predictions = mf_model.predict([user_test, item_test]).squeeze()
 
-    write_output(np.clip(predictions, 1, 5), output_path)
+    write_output(test_data[:, 0], np.clip(predictions, 1, 5), output_path)
 
 
 parser = argparse.ArgumentParser()

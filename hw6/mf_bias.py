@@ -80,7 +80,7 @@ def predict(test_data_path, model_path, output_path):
     print(predictions.shape)
     print(predictions)
 
-    write_output(np.clip(predictions, 1, 5), output_path)
+    write_output(test_data[:, 0], np.clip(predictions, 1, 5), output_path)
 
 
 if __name__ == '__main__':

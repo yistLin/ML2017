@@ -6,9 +6,9 @@ def read_data(data_path):
     return datas.values
 
 
-def write_output(outputs, output_path):
+def write_output(ids, outputs, output_path):
     cols = {
-        'TestDataID': range(1, len(outputs)+1),
+        'TestDataID': ids,
         'Rating': outputs
         }
     df = pd.DataFrame(cols)
